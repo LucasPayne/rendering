@@ -2,7 +2,7 @@
 CC=g++ -g -Iinclude -Ilibraries
 CFLAGS=-lm -lglfw3 -lGL -lX11 -ldl -lpthread -lrt
 
-rays: main.cpp build/glad.o
+rays: main.cpp include/geometry.h build/glad.o
 	$(CC) main.cpp build/glad.o -o rays $(CFLAGS)
 rays_run: rays
 	./rays

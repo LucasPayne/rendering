@@ -11,6 +11,7 @@
 // C-style includes.
 #include <math.h>
 #include <stdint.h>
+#include <stdio.h>
 // Library includes.
 #include <glm/glm.hpp>
 typedef glm::vec3 vec3;
@@ -26,12 +27,16 @@ private:
 public:    
     Transform object_to_world;
     Transform world_to_object;
+
+    RGB TEST_COLOR; // For example, it may be useful when developing to turn off shading and just see if geometry works.
+
     Primitive() {}
     Primitive(const Transform &o2w) {
         object_to_world = o2w;
         world_to_object = o2w.inverse();
+        TEST_COLOR = RGB(1,0,1);
     }
-    virtual bool intersect(const Ray &ray, HitInfo *info);
+    virtual bool intersect(Ray &ray, HitInfo *info) = 0;
 };
 class Sphere : public Primitive {
 private:
@@ -40,9 +45,7 @@ public:
     Sphere(const Transform &o2w, float radius) : Primitive(o2w) {
         m_radius = radius;
     }
-    bool intersect(const Ray &ray, HitInfo *info) {
-        
-    }
+    bool intersect(Ray &ray, HitInfo *info);
 };
 
 
@@ -50,22 +53,63 @@ class HitInfo {
 private:
 public:
     Primitive *primitive;
-    Point point; // point of intersection.
+    Point point;
 
     HitInfo() {}
-    HitInfo(Primitive &_primitive, Point _point) {
+    HitInfo(Primitive &_primitive) {
         primitive = &_primitive;
-        point = _point;
     }
 };
 
+bool Sphere::intersect(Ray &in_ray, HitInfo *info)
+{
+    Ray ray = world_to_object(in_ray);
+    std::cout << "Before: " << in_ray << "\n";
+    std::cout << "After: " << ray << "\n";
+
+    // Solve the quadratic at^2 + bt + c = 0.
+    float a = ray.d.x*ray.d.x + ray.d.y*ray.d.y + ray.d.z*ray.d.z;
+    float b = 2*(ray.o.x*ray.d.x + ray.o.y*ray.d.y + ray.o.z*ray.d.z);
+    float c = ray.o.x*ray.o.x + ray.o.y*ray.o.y + ray.o.z*ray.o.z - m_radius*m_radius;
+
+    float discriminant = b*b - 4*a*c;
+    if (discriminant < 0) return false;
+    float inv2a = 1.0 / 2*a;
+    float sqrtd = sqrt(discriminant);
+    float root1, root2, temp;
+    root1 = inv2a * (-b + sqrtd);
+    root2 = inv2a * (-b - sqrtd);
+    if (root1 > root2) {
+        temp = root1;
+        root1 = root2;
+        root2 = temp;
+    }
+    if (root1 < ray.min_t || root1 > ray.max_t) {
+        // Use root2 instead.
+        if (root2 < ray.min_t || root2 > ray.max_t) return false;
+        in_ray.max_t = root2;
+    } else {
+        in_ray.max_t = root1;
+    }
+    info->primitive = this;
+    info->point = object_to_world(ray(in_ray.max_t));
+    return true;
+}
 
 class Scene {
 private:
     // Primitive root;
-    std::vector<Primitive> primitives;
 public:
+
+    std::vector<Primitive *> primitives;
+
     Scene() {}
+    Scene(int num_primitives) {
+        primitives = std::vector<Primitive *>(num_primitives);
+    }
+    void add_primitive(Primitive *prim) {
+        primitives.push_back(prim);
+    }
 };
 
 class Camera {
@@ -192,9 +236,9 @@ public:
     Scene *scene;
     Camera *camera;
 
-    Renderer(Scene &_scene, Camera &_camera, int horizontal_pixels) {
-        scene = &_scene;
-        camera = &_camera;
+    Renderer(Scene *_scene, Camera *_camera, int horizontal_pixels) {
+        scene = _scene;
+        camera = _camera;
         m_horizontal_pixels = horizontal_pixels;
         m_horizontal_pixels_inv = 1.0 / horizontal_pixels;
         m_vertical_pixels = (int) (camera->aspect_ratio() * horizontal_pixels);
@@ -211,10 +255,10 @@ public:
     inline const int pixels_y() const {
         return m_vertical_pixels;
     }
-    inline const int pixels_x_inv() const {
+    inline const float pixels_x_inv() const {
         return m_horizontal_pixels_inv;
     }
-    inline const int pixels_y_inv() const {
+    inline const float pixels_y_inv() const {
         return m_vertical_pixels_inv;
     }
     inline void set_pixel(int index_i, int index_j, RGB rgb) {
@@ -230,12 +274,22 @@ public:
 // This function should be implemented by a linked program, procedurally describing the scene to be rendered.
 // Scene *make_scene();
 Scene *make_scene() {
-    return NULL;
+    Scene *scene = new Scene(0);
+
+    Sphere *sphere = new Sphere(Transform::translate(0,0,3), 0.5);
+    sphere->TEST_COLOR = RGB(0.7,0,0);
+    scene->add_primitive(sphere);
+    sphere = new Sphere(Transform::translate(2,-1.3,5), 1.2);
+    sphere->TEST_COLOR = RGB(0.7,0,0);
+    scene->add_primitive(sphere);
+
+
+    return scene;
 }
 
 void init_gl();
 void close_gl();
-void init_loop(Renderer &renderer);
+void init_loop(Renderer *renderer);
 void loop(Renderer &renderer);
 
 // Global OpenGL context and GLFW-related variables.
@@ -299,7 +353,7 @@ void close_gl()
     glfwTerminate();
 }
 
-void init_loop(Renderer &renderer)
+void init_loop(Renderer *renderer)
 {
     static float last_time;
     while (!glfwWindowShouldClose(window))
@@ -323,7 +377,7 @@ void init_loop(Renderer &renderer)
         glClear(GL_COLOR_BUFFER_BIT);
 
         glDisable(GL_SCISSOR_TEST);
-        loop(renderer);
+        loop(*renderer);
 
         glFlush();
         glfwSwapBuffers(window);
@@ -332,13 +386,13 @@ void init_loop(Renderer &renderer)
 
 
 // Intersect with a vector of primitives, exhaustively checking every one.
-bool intersect_primitive_vector(Ray &ray, std::vector<Primitive> &primitives, HitInfo &info)
+bool intersect_primitive_vector(Ray &ray, std::vector<Primitive *> &primitives, HitInfo &info)
 {
     int len = primitives.size();
     HitInfo info_per;
     bool hit_any = false;
     for (int i = 0; i < len; i++) {
-        if (primitives[i].intersect(ray, &info_per)) {
+        if (primitives[i]->intersect(ray, &info_per)) {
             info = info_per;
             hit_any = true;
         }
@@ -349,6 +403,10 @@ bool intersect_primitive_vector(Ray &ray, std::vector<Primitive> &primitives, Hi
 
 RGB trace_ray(Scene &scene, Ray ray)
 {
+    HitInfo info;
+    if (intersect_primitive_vector(ray, scene.primitives, info)) {
+        return info.primitive->TEST_COLOR;
+    }
     return RGB(0,1,0);
 }
 void loop(Renderer &renderer)
@@ -361,8 +419,8 @@ void loop(Renderer &renderer)
     Ray ray;
     for (int i = 0; i < renderer.pixels_x(); i++) {
         for (int j = 0; j < renderer.pixels_y(); j++) {
-            x = renderer.pixels_x_inv();
-            y = renderer.pixels_y_inv();
+            x = renderer.pixels_x_inv() * i;
+            y = renderer.pixels_y_inv() * j;
             p = camera.lens_point(x, y);
             ray = Ray(camera.position(), p - camera.position());
             renderer.set_pixel(i, j, trace_ray(scene, ray));
@@ -380,8 +438,8 @@ int main(int argc, char *argv[])
     Scene *scene = make_scene();
     // Camera *camera = make_camera();
     // Default to a camera at the origin facing down the Z-axis.
-    Camera camera = Camera(Point(0,0,0), Point(0,0,1), 60, 0.566);
-    Renderer renderer = Renderer(*scene, camera, 128);
+    Camera *camera = new Camera(Point(0,0,0), Point(0,0,1), 60, 0.566);
+    Renderer *renderer = new Renderer(scene, camera, 128);
 
     // Initialize the OpenGL context. This is used for graphical visualizations of the ray tracing process.
     init_gl();

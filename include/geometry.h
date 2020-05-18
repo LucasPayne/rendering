@@ -1,5 +1,6 @@
 #ifndef GEOMETRY_H
 #define GEOMETRY_H
+#include <iostream>
 #include <glm/glm.hpp>
 #include <cmath>
 
@@ -8,6 +9,12 @@ typedef glm::vec4 vec4;
 typedef glm::mat4x4 mat4x4;
 
 typedef vec3 Vector;
+inline std::ostream &operator<<(std::ostream &os, const Vector &vector)
+{
+    os << "Vector(" << vector.x << ", " << vector.y << ", " << vector.z << ")";
+    return os;
+}
+
 class Point {
 public:
     float x, y, z;
@@ -33,6 +40,11 @@ public:
         return Point(x + v.x, y + v.y, z + v.z);
     }
 };
+inline std::ostream &operator<<(std::ostream &os, const Point &point)
+{
+    os << "Point(" << point.x << ", " << point.y << ", " << point.z << ")";
+    return os;
+}
 
 class Ray {
 public:
@@ -58,6 +70,11 @@ public:
         return o + t*d;
     }
 };
+inline std::ostream &operator<<(std::ostream &os, const Ray &ray)
+{
+    os << "Ray(" << ray.o << ", " << ray.d << ")";
+    return os;
+}
 
 class Transform {
 private:
@@ -79,7 +96,10 @@ public:
         return Point(matrix * vec4(p.x, p.y, p.z, 1));
     }
     inline Vector operator()(const Vector &v) const {
-        return Vector(matrix * vec4(v.x, v.y, v.z, 1));
+        return Vector(matrix * vec4(v.x, v.y, v.z, 0));
+    }
+    inline Ray operator()(const Ray &ray) const {
+        return Ray((*this)(ray.o), (*this)(ray.d));
     }
     Transform inverse() const {
         return Transform(inverse_matrix, matrix);
@@ -95,6 +115,37 @@ public:
                     0,1,0,0,
                     0,0,1,0,
                     -v.x,-v.y,-v.z,1);
+	/*
+        mat4x4 m(1,0,0,v.x,
+                 0,1,0,v.y,
+                 0,0,1,v.z,
+                 0,0,0,1);
+        mat4x4 minv(1,0,0,-v.x,
+                    0,1,0,-v.y,
+                    0,0,1,-v.z,
+                    0,0,0,1);
+        */
+        return Transform(m, minv);
+    }
+    static Transform translate(float x, float y, float z) {
+        mat4x4 m(1,0,0,0,
+                 0,1,0,0,
+                 0,0,1,0,
+                 x,y,z,1);
+        mat4x4 minv(1,0,0,0,
+                    0,1,0,0,
+                    0,0,1,0,
+                    -x,-y,-z,1);
+        /*
+        mat4x4 m(1,0,0,x,
+                 0,1,0,y,
+                 0,0,1,z,
+                 0,0,0,1);
+        mat4x4 minv(1,0,0,-x,
+                    0,1,0,-y,
+                    0,0,1,-z,
+                    0,0,0,1);
+        */
         return Transform(m, minv);
     }
     static Transform lookat(const Point &origin, const Point &lookat, const Vector &up) {
