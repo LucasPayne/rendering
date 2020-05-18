@@ -1,7 +1,7 @@
 /*================================================================================
     Transform
 ================================================================================*/
-#include "core/transform.hpp"
+#include "mathematics/transform.hpp"
 
 Transform Transform::translate(const Vector &v)
 {

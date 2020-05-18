@@ -1,5 +1,5 @@
 #include <iostream>
-#include "core/geometry.hpp"
+#include "mathematics/geometry.hpp"
 
 /*--------------------------------------------------------------------------------
     Vector

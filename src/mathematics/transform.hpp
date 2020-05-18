@@ -6,7 +6,7 @@
 typedef glm::vec3 vec3;
 typedef glm::vec4 vec4;
 typedef glm::mat4x4 mat4x4;
-#include "core/geometry.hpp"
+#include "mathematics/geometry.hpp"
 
 /*================================================================================
     A Transform stores a matrix and its inverse.
