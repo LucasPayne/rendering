@@ -5,7 +5,9 @@
 #include <GLFW/glfw3.h>
 // C++ includes.
 #include <iostream>
+#include <fstream>
 #include <vector>
+#include <string>
 // C-style includes.
 #include <math.h>
 #include <stdint.h>
@@ -16,31 +18,212 @@ typedef glm::mat4x4 mat4x4;
 // Project includes.
 #include "geometry.h"
 
-class Scene {
-private:
-public:
-    Scene() {}
+typedef vec3 RGB;
+
+class HitInfo;
+class Primitive {
+private:    
+public:    
+    Transform object_to_world;
+    Transform world_to_object;
+    Primitive() {}
+    Primitive(const Transform &o2w) {
+        object_to_world = o2w;
+        world_to_object = o2w.inverse();
+    }
+    virtual bool intersect(const Ray &ray, HitInfo *info);
 };
-class Camera {
+class Sphere : public Primitive {
 private:
-    Transform transform;
+    float m_radius;
 public:
-    Camera() {}
-    Camera(Point _position, Point _lookat) {
-        transform = Transform::lookat(_position, _lookat, Vector(0,1,0));
+    Sphere(const Transform &o2w, float radius) : Primitive(o2w) {
+        m_radius = radius;
+    }
+    bool intersect(const Ray &ray, HitInfo *info) {
+        
     }
 };
 
-// A World encapsulates the Scene and Camera.
-class World {
+
+class HitInfo {
 private:
-    Scene &scene;
-    Camera &camera;
 public:
-    World(Scene &_scene, Camera &_camera) :
-        scene{_scene},
-        camera{_camera}
-    {}
+    Primitive *primitive;
+    Point point; // point of intersection.
+
+    HitInfo() {}
+    HitInfo(Primitive &_primitive, Point _point) {
+        primitive = &_primitive;
+        point = _point;
+    }
+};
+
+
+class Scene {
+private:
+    // Primitive root;
+    std::vector<Primitive> primitives;
+public:
+    Scene() {}
+};
+
+class Camera {
+private:
+    int m_resolution_x;
+    int m_resolution_y;
+
+    float m_near_plane_distance;
+    float m_far_plane_distance;
+    float m_near_plane_half_width;
+    float m_near_plane_half_height;
+    float m_fov; // The field of view is measured horizontally.
+    float m_aspect_ratio;
+
+    Point m_position;
+public:
+    Transform transform;
+
+    Camera() {}
+    // Aspect ratio is given as height/width.
+    Camera(Point position, Point lookat, float fov, float aspect_ratio)
+    {
+        // Initialize private data.
+        // Field of view is passed in degrees.
+        m_fov = (M_PI/180.0) * fov;
+        m_position = position;
+        m_aspect_ratio = aspect_ratio;
+        m_near_plane_distance = 1; // Generated rays are from the camera origin to points on the near plane.
+        m_far_plane_distance = 10; // Nothing past the far plane is culled, so this is fine.
+        m_near_plane_half_width = cos(0.5 * m_fov);
+        m_near_plane_half_height = aspect_ratio * m_near_plane_half_width;
+
+        // Initialize public data.
+        transform = Transform::lookat(position, lookat, Vector(0,1,0));
+    }
+    inline const float fov() const {
+        return m_fov;
+    }
+    inline const float aspect_ratio() const {
+        return m_aspect_ratio;
+    }
+    inline Point lens_point(float x, float y) const {
+        // Return a position on the near quad ("lens") in world space, given x,y in
+        // coordinates
+        // (0,1) [           ] (1,1)
+        //       [           ]
+        //       [           ]
+        // (0,0) [           ] (1,0).
+        return transform(Point((2*x - 1)*m_near_plane_half_width,
+                               (2*y - 1)*m_near_plane_half_height,
+                               m_near_plane_distance));
+    }
+    inline Point position() const {
+        return m_position;
+    }
+};
+
+class FrameBuffer {
+private:
+    std::vector<RGB> data;
+    int m_width;
+    int m_height;
+public:
+    FrameBuffer() {}
+    FrameBuffer(int width, int height) {
+        m_width = width;
+        m_height = height;
+        data = std::vector<RGB>(width * height);
+    }
+    inline RGB operator()(int index_i, int index_j) {
+        return data[index_i * m_height + index_j];
+    }
+    inline void set(int index_i, int index_j, RGB rgb) {
+        data[index_i * m_height + index_j] = rgb;
+    }
+    void write_to_ppm(std::string const &filename)
+    {
+        /*  Example ppm file:
+            P3
+            2 9
+            255
+            255 0 0    255 255 0
+            255 0 0    255 255 0
+            255 255 0    255 0 0
+            255 0 0    255 255 0
+            255 0 0    255 255 0
+            255 255 0    255 0 0
+            255 0 0    255 255 0
+            255 0 0    255 255 0
+            255 255 0    255 0 0
+        */
+        std::ofstream file;
+        file.open(filename);
+        file << "P3\n";
+        file << m_width << " " << m_height << "\n";
+        file << "255\n";
+        uint8_t rgb[3];
+        for (int j = 0; j < m_height; j++) {
+            for (int i = 0; i < m_width; i++) {
+                // Downsample each RGB triple.
+                for (int k = 0; k < 3; k++) {
+                    rgb[k] = (int) (255 * (*this)(i, j)[k]);
+                }
+                file << (int) rgb[0] << " " << (int) rgb[1] << " " << (int) rgb[2] << (i == m_width-1 ? "" : "    ");
+            }
+            file << "\n";
+        }
+        file.close();
+    }
+};
+
+// A Renderer encapsulates the Scene and Camera, and other things rendered and used for rendering.
+class Renderer {
+private:
+    int m_horizontal_pixels;
+    int m_vertical_pixels;
+    // Raster-space--screen-space conversions are made a lot, so cache the inverses of the pixel extents.
+    float m_horizontal_pixels_inv;
+    float m_vertical_pixels_inv;
+
+    int m_active_frame;
+    std::vector<FrameBuffer> m_frames;
+public:
+    Scene *scene;
+    Camera *camera;
+
+    Renderer(Scene &_scene, Camera &_camera, int horizontal_pixels) {
+        scene = &_scene;
+        camera = &_camera;
+        m_horizontal_pixels = horizontal_pixels;
+        m_horizontal_pixels_inv = 1.0 / horizontal_pixels;
+        m_vertical_pixels = (int) (camera->aspect_ratio() * horizontal_pixels);
+        m_vertical_pixels_inv = 1.0 / m_vertical_pixels;
+        // Default to have space for one rendered frame.
+        // Initialize this framebuffer to match the resolution.
+        m_frames = std::vector<FrameBuffer>(1);
+        m_frames[0] = FrameBuffer(m_horizontal_pixels, m_vertical_pixels);
+        m_active_frame = 0;
+    }
+    inline const int pixels_x() const {
+        return m_horizontal_pixels;
+    }
+    inline const int pixels_y() const {
+        return m_vertical_pixels;
+    }
+    inline const int pixels_x_inv() const {
+        return m_horizontal_pixels_inv;
+    }
+    inline const int pixels_y_inv() const {
+        return m_vertical_pixels_inv;
+    }
+    inline void set_pixel(int index_i, int index_j, RGB rgb) {
+        m_frames[m_active_frame].set(index_i, index_j, rgb);
+    }
+    void write_to_ppm(std::string const &filename)
+    {
+        m_frames[m_active_frame].write_to_ppm(filename);
+    }
 };
 
 
@@ -52,8 +235,8 @@ Scene *make_scene() {
 
 void init_gl();
 void close_gl();
-void init_loop(World &world);
-void loop(World &world);
+void init_loop(Renderer &renderer);
+void loop(Renderer &renderer);
 
 // Global OpenGL context and GLFW-related variables.
 GLFWwindow *window;
@@ -116,7 +299,7 @@ void close_gl()
     glfwTerminate();
 }
 
-void init_loop(World &world)
+void init_loop(Renderer &renderer)
 {
     static float last_time;
     while (!glfwWindowShouldClose(window))
@@ -140,51 +323,53 @@ void init_loop(World &world)
         glClear(GL_COLOR_BUFFER_BIT);
 
         glDisable(GL_SCISSOR_TEST);
-        loop(world);
+        loop(renderer);
 
         glFlush();
         glfwSwapBuffers(window);
     }
 }
 
-void loop(World &world)
+
+// Intersect with a vector of primitives, exhaustively checking every one.
+bool intersect_primitive_vector(Ray &ray, std::vector<Primitive> &primitives, HitInfo &info)
 {
-/*
-    float inv_image_plane_width = 1.0 / scene.camera.image_plane_width;
-    float inv_image_plane_height = 1.0 / scene.camera.image_plane_height;
-
-    float cell_width = scene.camera.image_plane_width / scene.width;
-    float cell_height = scene.camera.image_plane_height / scene.height;
-
-    for (int i = 0; i < scene.width; i++) {
-        for (int j = 0; j < scene.height; j++) {
-            vec3 origin = vec3(0,0,0);
-            vec3 direction = scene.camera.top_left + vec3((i + 0.5) * inv_image_plane_width, -(j + 0.5) * inv_image_plane_height, 0);
-            Ray ray = Ray(origin, direction);
-            vec3 color = sample_eye_ray(scene, ray, cell_width, cell_height);
+    int len = primitives.size();
+    HitInfo info_per;
+    bool hit_any = false;
+    for (int i = 0; i < len; i++) {
+        if (primitives[i].intersect(ray, &info_per)) {
+            info = info_per;
+            hit_any = true;
         }
     }
-*/
+    return hit_any;
 }
-/*
-vec3 sample_eye_ray(Scene &scene, Ray ray, float cell_width, float cell_height)
+
+
+RGB trace_ray(Scene &scene, Ray ray)
 {
-    vec3 color = vec3(0,0,0);
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            Ray sample_ray = Ray(ray.origin, ray.direction - vec3((i - 2) * cell_width/4, (j - 2) * cell_height/4));
-            vec3 sample_color = ray_trace(scene, sample_ray);
-            color += sample_color;
+    return RGB(0,1,0);
+}
+void loop(Renderer &renderer)
+{
+    Camera &camera = *renderer.camera;
+    Scene &scene = *renderer.scene;
+
+    float x, y;
+    Point p;
+    Ray ray;
+    for (int i = 0; i < renderer.pixels_x(); i++) {
+        for (int j = 0; j < renderer.pixels_y(); j++) {
+            x = renderer.pixels_x_inv();
+            y = renderer.pixels_y_inv();
+            p = camera.lens_point(x, y);
+            ray = Ray(camera.position(), p - camera.position());
+            renderer.set_pixel(i, j, trace_ray(scene, ray));
         }
     }
-    color /= 16;
-    return color;
-}
-*/
-
-vec3 ray_trace(Scene &scene, Ray ray)
-{
-    return vec3(0,1,0);
+    renderer.write_to_ppm("test.ppm");
+    exit(EXIT_SUCCESS);
 }
 
 
@@ -195,11 +380,11 @@ int main(int argc, char *argv[])
     Scene *scene = make_scene();
     // Camera *camera = make_camera();
     // Default to a camera at the origin facing down the Z-axis.
-    Camera camera = Camera(Point(0,0,0), Point(0,0,1));
-    World world = World(*scene, camera);
+    Camera camera = Camera(Point(0,0,0), Point(0,0,1), 60, 0.566);
+    Renderer renderer = Renderer(*scene, camera, 128);
 
     // Initialize the OpenGL context. This is used for graphical visualizations of the ray tracing process.
     init_gl();
-    init_loop(world);
+    init_loop(renderer);
     close_gl();
 }

@@ -1,6 +1,7 @@
 #ifndef GEOMETRY_H
 #define GEOMETRY_H
 #include <glm/glm.hpp>
+#include <cmath>
 
 typedef glm::vec3 vec3;
 typedef glm::vec4 vec4;
@@ -37,9 +38,16 @@ class Ray {
 public:
     Point o;
     Vector d;
+    float min_t;
+    float max_t;
 
     Ray() {}
-    Ray(const Point &_origin, const Vector &_direction) : o{_origin}, d{_direction} {}
+    Ray(const Point &_origin, const Vector &_direction) :
+        o{_origin}, d{_direction}
+    {
+        min_t = 1e-5;
+        max_t = INFINITY;
+    }
 
     inline void normalize() {
         glm::normalize(d);
@@ -73,6 +81,10 @@ public:
     inline Vector operator()(const Vector &v) const {
         return Vector(matrix * vec4(v.x, v.y, v.z, 1));
     }
+    Transform inverse() const {
+        return Transform(inverse_matrix, matrix);
+    }
+
 // Static methods
     static Transform translate(const Vector &v) {
         mat4x4 m(1,0,0,0,
