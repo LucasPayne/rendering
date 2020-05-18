@@ -1,0 +1,16 @@
+#!/bin/bash
+
+cflags="-lglfw3 -lm -lrt -lm -ldl -lX11 -lpthread -lGL -lpng"
+
+if [[ $# -ne 1 ]] ; then
+    echo "give good args"
+    exit 0
+else
+    objects="build/glad.o build/main.o"
+    g++ -o build/glad.o -c src/glad/glad.c $cflags
+    g++ -o build/main.o -c main.cpp $cflags
+    g++ -o build/scene/$1.o -c "scenes/$1.cpp" $cflags
+    g++ -o main "scenes/$1.cpp" $objects $cflags
+    ./main
+fi
+
