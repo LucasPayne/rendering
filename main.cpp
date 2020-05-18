@@ -12,12 +12,16 @@
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 // Library includes.
 #include <glm/glm.hpp>
 typedef glm::vec3 vec3;
 typedef glm::mat4x4 mat4x4;
 // Project includes.
-#include "geometry.h"
+#include "core.hpp"
+
+#define frand() ((1.0 / (RAND_MAX + 1.0)) * rand())
+#define frand_interval(A,B) (( A ) + (( B ) - ( A ))*frand())
 
 typedef vec3 RGB;
 
@@ -64,8 +68,6 @@ public:
 bool Sphere::intersect(Ray &in_ray, HitInfo *info)
 {
     Ray ray = world_to_object(in_ray);
-    std::cout << "Before: " << in_ray << "\n";
-    std::cout << "After: " << ray << "\n";
 
     // Solve the quadratic at^2 + bt + c = 0.
     float a = ray.d.x*ray.d.x + ray.d.y*ray.d.y + ray.d.z*ray.d.z;
@@ -276,13 +278,11 @@ public:
 Scene *make_scene() {
     Scene *scene = new Scene(0);
 
-    Sphere *sphere = new Sphere(Transform::translate(0,0,3), 0.5);
-    sphere->TEST_COLOR = RGB(0.7,0,0);
-    scene->add_primitive(sphere);
-    sphere = new Sphere(Transform::translate(2,-1.3,5), 1.2);
-    sphere->TEST_COLOR = RGB(0.7,0,0);
-    scene->add_primitive(sphere);
-
+    for (int i = 0; i < 10; i++) {
+        Sphere *sphere = new Sphere(Transform::translate(frand_interval(-5,5),frand_interval(-5,5),frand_interval(2,10)), frand_interval(0.2,1.8));
+        sphere->TEST_COLOR = RGB(frand(), frand(), frand());
+        scene->add_primitive(sphere);
+    }
 
     return scene;
 }
@@ -439,7 +439,7 @@ int main(int argc, char *argv[])
     // Camera *camera = make_camera();
     // Default to a camera at the origin facing down the Z-axis.
     Camera *camera = new Camera(Point(0,0,0), Point(0,0,1), 60, 0.566);
-    Renderer *renderer = new Renderer(scene, camera, 128);
+    Renderer *renderer = new Renderer(scene, camera, 512);
 
     // Initialize the OpenGL context. This is used for graphical visualizations of the ray tracing process.
     init_gl();
