@@ -13,9 +13,9 @@ typedef glm::mat4x4 mat4x4;
 ================================================================================*/
 class Transform {
 private:
+public:
     mat4x4 matrix;
     mat4x4 inverse_matrix;
-public:
     Transform() {
         // No-parameter constructor gives the identity Transform.
         memset(&matrix, 0, sizeof(mat4x4));
@@ -61,6 +61,13 @@ public:
     static Transform translate(const Vector &v);
     static Transform translate(const Point &p);
     static Transform translate(float x, float y, float z);
+
+    static Transform x_rotation(float theta);
+    static Transform y_rotation(float theta);
+    static Transform z_rotation(float theta);
+    static Transform extrinsic_euler_angles_XYZ(float theta_x, float theta_y, float theta_z);
 };
+
+Transform operator*(const Transform &A, const Transform &B);
 
 #endif // CORE_TRANSFORM_H

@@ -7,8 +7,12 @@
 // A Renderer encapsulates the Scene and Camera, and other things rendered and used for rendering.
 class Renderer {
 private:
+    int m_downsampled_horizontal_pixels;
+    int m_downsampled_vertical_pixels;
     int m_horizontal_pixels;
     int m_vertical_pixels;
+    int m_supersample_width;
+
     // Raster-space--screen-space conversions are made a lot, so cache the inverses of the pixel extents.
     float m_horizontal_pixels_inv;
     float m_vertical_pixels_inv;
@@ -19,17 +23,22 @@ public:
     Scene *scene;
     Camera *camera;
 
-    Renderer(Scene *_scene, Camera *_camera, int horizontal_pixels) {
+    Renderer(Scene *_scene, Camera *_camera, int horizontal_pixels, int supersample_width = 1) {
         scene = _scene;
         camera = _camera;
-        m_horizontal_pixels = horizontal_pixels;
-        m_horizontal_pixels_inv = 1.0 / horizontal_pixels;
-        m_vertical_pixels = (int) (camera->aspect_ratio() * horizontal_pixels);
+        m_supersample_width = supersample_width;
+
+        m_horizontal_pixels = m_supersample_width * horizontal_pixels;
+        m_downsampled_horizontal_pixels = horizontal_pixels;
+        m_horizontal_pixels_inv = 1.0 / m_horizontal_pixels;
+
+        m_downsampled_vertical_pixels = (int) (camera->aspect_ratio() * m_downsampled_horizontal_pixels);
+        m_vertical_pixels = m_supersample_width * m_downsampled_vertical_pixels;
         m_vertical_pixels_inv = 1.0 / m_vertical_pixels;
         // Default to have space for one rendered frame.
         // Initialize this framebuffer to match the resolution.
         m_frames = std::vector<FrameBuffer>(1);
-        m_frames[0] = FrameBuffer(m_horizontal_pixels, m_vertical_pixels);
+        m_frames[0] = FrameBuffer(m_supersample_width * m_horizontal_pixels, m_supersample_width * m_vertical_pixels);
         m_active_frame = 0;
     }
     inline const int pixels_x() const {
@@ -49,7 +58,25 @@ public:
     }
     void write_to_ppm(std::string const &filename)
     {
-        m_frames[m_active_frame].write_to_ppm(filename);
+        FrameBuffer &fb = m_frames[m_active_frame];
+
+        FrameBuffer downsampled_fb(m_downsampled_horizontal_pixels, m_downsampled_vertical_pixels);
+        int ss = m_supersample_width;
+        for (int i = 0; i < m_downsampled_horizontal_pixels; i++) {
+            for (int j = 0; j < m_downsampled_vertical_pixels; j++) {
+                RGB color(0,0,0);
+                for (int ssi = 0; ssi < ss; ssi++) {
+                    for (int ssj = 0; ssj < ss; ssj++) {
+                        int ip = ss * i + ssi;
+                        int jp = ss * j + ssj;
+                        color += fb(ip, jp);
+                    }
+                }
+                color /= ss * ss;
+                downsampled_fb.set(i, j, color);
+            }
+        }
+        downsampled_fb.write_to_ppm(filename);
     }
 };
 

@@ -2,9 +2,6 @@
 #define IMAGING_CAMERA_H
 class Camera {
 private:
-    int m_resolution_x;
-    int m_resolution_y;
-
     float m_near_plane_distance;
     float m_far_plane_distance;
     float m_near_plane_half_width;

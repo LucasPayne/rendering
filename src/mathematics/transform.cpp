@@ -2,6 +2,7 @@
     Transform
 ================================================================================*/
 #include "mathematics/transform.hpp"
+#include <math.h>
 
 // Use a macro, since the translate function variants only vary in
 // where x,y,z come from.
@@ -42,4 +43,57 @@ Transform Transform::lookat(const Point &origin, const Point &lookat, const Vect
              forward.x, forward.y, forward.z, 0,
              origin.x, origin.y, origin.z, 1);
     return Transform(m);
+}
+
+// Multiplying transforms gives their composition, (A,A^-1)*(B,B^-1) = (AB,B^-1 A^-1).
+Transform operator*(const Transform &A, const Transform &B)
+{
+    return Transform(A.matrix * B.matrix, B.inverse_matrix * A.inverse_matrix);
+}
+
+Transform Transform::x_rotation(float theta)
+{
+    float c = cos(theta);
+    float s = sin(theta);
+    mat4x4 m(1,0,0,0,
+             0,c,s,0,
+             0,-s,c,0,
+             0,0,0,1);
+    mat4x4 minv(1,0,0,0,
+                0,c,-s,0,
+                0,s,c,0,
+                0,0,0,1);
+    return Transform(m, minv);
+}
+Transform Transform::y_rotation(float theta)
+{
+    float c = cos(theta);
+    float s = sin(theta);
+    mat4x4 m(c,0,s,0,
+             0,1,0,0,
+             -s,0,c,0,
+             0,0,0,1);
+    mat4x4 minv(c,0,-s,0,
+             0,1,0,0,
+             s,0,c,0,
+             0,0,0,1);
+    return Transform(m, minv);
+}
+Transform Transform::z_rotation(float theta)
+{
+    float c = cos(theta);
+    float s = sin(theta);
+    mat4x4 m(c,s,0,0,
+             -s,c,0,0,
+             0,0,1,0,
+             0,0,0,1);
+    mat4x4 minv(c,-s,0,0,
+             s,c,0,0,
+             0,0,1,0,
+             0,0,0,1);
+    return Transform(m, minv);
+}
+Transform Transform::extrinsic_euler_angles_XYZ(float theta_x, float theta_y, float theta_z)
+{
+    return (Transform::z_rotation(theta_z) * Transform::y_rotation(theta_y)) * Transform::x_rotation(theta_x);
 }
