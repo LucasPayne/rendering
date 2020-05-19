@@ -1,3 +1,10 @@
+#--------------------------------------------------------------------------------
+#
+# note:
+#     Possibly dependencies, such as for headers, are missing.
+#     It would be good to learn to use cmake.
+#
+#--------------------------------------------------------------------------------
 
 CC=g++ -g -Isrc -Ilibraries
 CFLAGS=-lm -lglfw3 -lGL -lX11 -ldl -lpthread -lrt
@@ -22,8 +29,10 @@ build/mathematics/geometry.o: src/mathematics/geometry.cpp src/mathematics/geome
 build/mathematics/transform.o: src/mathematics/transform.cpp src/mathematics/transform.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)
 
-build/primitives.o: build/primitives/sphere.o
+build/primitives.o: build/primitives/primitives.o build/primitives/sphere.o
 	ld -relocatable -o $@ $^
+build/primitives/primitives.o: src/primitives/primitives.cpp src/primitives.hpp src/mathematics.hpp
+	$(CC) -c $< -o $@ $(CFLAGS)
 build/primitives/sphere.o: src/primitives/sphere.cpp src/primitives/sphere.hpp src/primitives.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)
 
@@ -43,7 +52,7 @@ build/illumination/light.o: src/illumination/light.cpp src/illumination/light.hp
 build/illumination/point_light.o: src/illumination/point_light.cpp src/illumination/point_light.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)
 
-build/scene.o: src/scene.hpp src/scene/scene.cpp
+build/scene.o: src/scene.hpp src/scene/scene.cpp src/mathematics.hpp src/primitives.hpp
 	$(CC) -c src/scene/scene.cpp -o $@ $(CFLAGS)
 
 build/renderer.o: src/renderer.hpp src/renderer/renderer.cpp

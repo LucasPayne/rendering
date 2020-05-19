@@ -1,6 +1,7 @@
 #ifndef PRIMITIVES_H
 #define PRIMITIVES_H
 #include "mathematics.hpp"
+#include <vector>
 
 class LocalGeometry;
 
@@ -36,6 +37,11 @@ public:
         n = _n;
     }
 };
+
+// Routine to intersect with a vector of primitives. This acts as a basic list, whose members are exhaustively searched.
+// -
+// This should be a type of primitive instead of requiring a separate routine.
+bool intersect_primitive_vector(Ray &ray, std::vector<Primitive *> &primitives, LocalGeometry &geom);
 
 #include "primitives/sphere.hpp"
 

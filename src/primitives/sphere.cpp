@@ -37,7 +37,7 @@ bool Sphere::intersect(Ray &in_ray, LocalGeometry *geom)
         in_ray.max_t = root1;
     }
     geom->primitive = this;
-    geom->p = object_to_world(ray(in_ray.max_t));
+    geom->p = in_ray(ray.min_t);
     geom->n = geom->p - object_to_world.position();
     return true;
 }

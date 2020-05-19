@@ -55,6 +55,7 @@ public:
     // Static methods.
     static Transform lookat(const Point &origin, const Point &lookat, const Vector &up);
     static Transform translate(const Vector &v);
+    static Transform translate(const Point &p);
     static Transform translate(float x, float y, float z);
 };
 

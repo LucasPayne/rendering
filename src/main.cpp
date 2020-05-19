@@ -122,40 +122,23 @@ void init_loop(Renderer *renderer)
 }
 
 
-// Intersect with a vector of primitives, exhaustively checking every one.
-bool intersect_primitive_vector(Ray &ray, std::vector<Primitive *> &primitives, LocalGeometry &geom)
-{
-    LocalGeometry geom_per;
-    bool hit_any = false;
-    for (Primitive *primitive : primitives) {
-        if (primitive->intersect(ray, &geom_per)) {
-            geom = geom_per;
-            hit_any = true;
-        }
-    }
-    return hit_any;
-}
 
-bool ray_hits_surface(Scene &scene, Ray ray)
-{
-    // No intersect predicate method, just use the full one.
-    LocalGeometry geom;
-    return intersect_primitive_vector(ray, scene.primitives, geom);
-
-}
 RGB trace_ray(Scene &scene, Ray ray)
 {
     LocalGeometry geom;
     if (intersect_primitive_vector(ray, scene.primitives, geom)) {
+        Vector n = glm::normalize(geom.n);
+        return RGB(n.x, n.y, n.z);
+
         RGB color = RGB(0,0,0);
         for (Light *light : scene.lights) {
-            Ray light_ray = light->light_ray(geom);
-            if (!ray_hits_surface(scene, light_ray)) {
-                RGB light_color;
-                // "Illumination", not anything scientific.
-                float incoming_illumination = light->illumination(geom, light_color);
-                std::cout << "incoming: " << incoming_illumination << ", color: " << light_color << "\n";
-                color += incoming_illumination * light_color;
+            Vector light_vector;
+	    VisibilityTester visibility_tester;
+            RGB light_radiance = light->radiance(geom.p, &light_vector, &visibility_tester);
+            //if (visibility_tester.unoccluded(scene)) {
+            if (true) {
+                float cos_theta = glm::dot(light_vector, n);
+                color += light_radiance * (cos_theta < 0 ? 0 : cos_theta);
             }
         }
         // Modulate with the diffuse color of the surface.
@@ -175,8 +158,14 @@ void loop(Renderer &renderer)
     for (int i = 0; i < renderer.pixels_x(); i++) {
         for (int j = 0; j < renderer.pixels_y(); j++) {
             x = renderer.pixels_x_inv() * i;
-            y = renderer.pixels_y_inv() * j;
+            y = 1 - renderer.pixels_y_inv() * j;
+
             p = camera.lens_point(x, y);
+
+            // std::cout << "Tracing ray (" << x << ", " << y << ")\n";
+            // std::cout << "Lens point: " << p << "\n";
+            // getchar();
+
             ray = Ray(camera.position(), p - camera.position());
             renderer.set_pixel(i, j, trace_ray(scene, ray));
         }

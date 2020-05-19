@@ -21,6 +21,9 @@ public:
     inline void add_light(Light *light) {
         lights.push_back(light);
     }
+
+    bool hit_by_ray(Ray ray);
 };
+
 
 #endif // SCENE_H
