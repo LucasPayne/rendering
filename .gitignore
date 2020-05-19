@@ -2,4 +2,6 @@ __assignment/
 __resources/
 __pbrt/
 __misc/
+build/**/*.o
+models/Stanford3DRepository
 notes.txt
