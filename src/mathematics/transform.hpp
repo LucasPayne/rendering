@@ -42,7 +42,11 @@ public:
         return Vector(matrix * vec4(v.x, v.y, v.z, 0));
     }
     inline Ray operator()(const Ray &ray) const {
-        return Ray((*this)(ray.o), (*this)(ray.d));
+        Ray transformed_ray((*this)(ray.o), (*this)(ray.d));
+        //- If new ray attributes are added, remember to copy them here!
+        transformed_ray.min_t = ray.min_t;
+        transformed_ray.max_t = ray.max_t;
+        return transformed_ray;
     }
     inline Transform inverse() const {
         return Transform(inverse_matrix, matrix);

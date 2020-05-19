@@ -28,9 +28,6 @@ public:
     Vector n;
 
     LocalGeometry() {}
-    LocalGeometry(Primitive &_primitive) {
-        primitive = &_primitive;
-    }
     LocalGeometry(Primitive &_primitive, Point _p, Vector _n) {
         primitive = &_primitive;
         p = _p;
@@ -41,7 +38,7 @@ public:
 // Routine to intersect with a vector of primitives. This acts as a basic list, whose members are exhaustively searched.
 // -
 // This should be a type of primitive instead of requiring a separate routine.
-bool intersect_primitive_vector(Ray &ray, std::vector<Primitive *> &primitives, LocalGeometry &geom);
+bool intersect_primitive_vector(Ray &ray, std::vector<Primitive *> &primitives, LocalGeometry *geom);
 
 #include "primitives/sphere.hpp"
 

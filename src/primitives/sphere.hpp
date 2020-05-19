@@ -5,7 +5,9 @@ class Sphere : public Primitive {
 private:
     float m_radius;
 public:
-    Sphere(const Transform &o2w, float radius) : Primitive(o2w) {
+    Sphere(const Transform &o2w, float radius) :
+        Primitive(o2w)
+    {
         m_radius = radius;
     }
     bool intersect(Ray &ray, LocalGeometry *geom);

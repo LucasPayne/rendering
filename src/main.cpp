@@ -126,9 +126,13 @@ void init_loop(Renderer *renderer)
 RGB trace_ray(Scene &scene, Ray ray)
 {
     LocalGeometry geom;
-    if (intersect_primitive_vector(ray, scene.primitives, geom)) {
+    if (intersect_primitive_vector(ray, scene.primitives, &geom)) {
         Vector n = glm::normalize(geom.n);
-        return RGB(n.x, n.y, n.z);
+        // std::cout << geom.p << "\n";
+        // std::cout << geom.n << "\n";
+        // getchar();
+        // return RGB(geom.p.x, geom.p.y,0);
+        //return RGB(n.x, n.y, n.z);
 
         RGB color = RGB(0,0,0);
         for (Light *light : scene.lights) {
@@ -142,7 +146,7 @@ RGB trace_ray(Scene &scene, Ray ray)
             }
         }
         // Modulate with the diffuse color of the surface.
-        color *= RGB(1,0,0);
+        color *= RGB(1,1,1);
         return color;
     }
     return RGB(0,1,0);
@@ -164,7 +168,6 @@ void loop(Renderer &renderer)
 
             // std::cout << "Tracing ray (" << x << ", " << y << ")\n";
             // std::cout << "Lens point: " << p << "\n";
-            // getchar();
 
             ray = Ray(camera.position(), p - camera.position());
             renderer.set_pixel(i, j, trace_ray(scene, ray));

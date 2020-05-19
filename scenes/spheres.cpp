@@ -9,9 +9,11 @@ Scene *make_scene() {
     // }
     scene->add_primitive(new Sphere(Transform::translate(-1.3,0.4,2), 0.5));
     scene->add_primitive(new Sphere(Transform::translate(0,0,2), 0.5));
-    // scene->add_primitive(new Sphere(Transform::translate(1.3,0,2), 0.5));
+    scene->add_primitive(new Sphere(Transform::translate(1.3,0,2), 0.5));
+    scene->add_primitive(new Sphere(Transform::translate(0.2,0.5,1.3), 0.1));
 
-    scene->add_light(new PointLight(Point(0,0,0), RGB(1,1,1)));
+    scene->add_light(new PointLight(Point(-1,0,0), RGB(1,1,1)));
+    scene->add_light(new PointLight(Point(2,0,1), RGB(0,0.8,1)));
     // scene->add_light(new PointLight(Point(2,0,2), 300.f*RGB(1,1,1)));
     // scene->add_light(new PointLight(Point(-2,0,2), 300.f*RGB(1,1,1)));
 

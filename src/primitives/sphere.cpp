@@ -9,6 +9,7 @@
 bool Sphere::intersect(Ray &in_ray, LocalGeometry *geom)
 {
     Ray ray = world_to_object(in_ray);
+
     Point &o = ray.o;
     Vector &d = ray.d;
 
@@ -19,7 +20,7 @@ bool Sphere::intersect(Ray &in_ray, LocalGeometry *geom)
 
     float discriminant = b*b - 4*a*c;
     if (discriminant < 0) return false;
-    float inv2a = 1.0 / 2*a;
+    float inv2a = 1.0 / (2*a);
     float sqrtd = sqrt(discriminant);
     float root1, root2, temp;
     root1 = inv2a * (-b + sqrtd);
@@ -29,15 +30,21 @@ bool Sphere::intersect(Ray &in_ray, LocalGeometry *geom)
         root1 = root2;
         root2 = temp;
     }
+    std::cout << "root 1: " << root1 << "\n";
+    std::cout << "root 2: " << root2 << "\n";
+
+    float t;
     if (root1 < ray.min_t || root1 > ray.max_t) {
         // Use root2 instead.
         if (root2 < ray.min_t || root2 > ray.max_t) return false;
-        in_ray.max_t = root2;
+        t = root2;
+        // in_ray.max_t = root2;
     } else {
-        in_ray.max_t = root1;
+        t = root1;
+        // in_ray.max_t = root1;
     }
     geom->primitive = this;
-    geom->p = in_ray(ray.min_t);
+    geom->p = in_ray.o + in_ray.d * t;
     geom->n = geom->p - object_to_world.position();
     return true;
 }
