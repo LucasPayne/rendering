@@ -6,14 +6,16 @@
 #include "primitives.hpp"
 #include "primitives/sphere.hpp"
 
-bool Sphere::intersect(Ray &in_ray, HitInfo *info)
+bool Sphere::intersect(Ray &in_ray, LocalGeometry *geom)
 {
     Ray ray = world_to_object(in_ray);
+    Point &o = ray.o;
+    Vector &d = ray.d;
 
     // Solve the quadratic at^2 + bt + c = 0.
-    float a = ray.d.x*ray.d.x + ray.d.y*ray.d.y + ray.d.z*ray.d.z;
-    float b = 2*(ray.o.x*ray.d.x + ray.o.y*ray.d.y + ray.o.z*ray.d.z);
-    float c = ray.o.x*ray.o.x + ray.o.y*ray.o.y + ray.o.z*ray.o.z - m_radius*m_radius;
+    float a = d.x*d.x + d.y*d.y + d.z*d.z;
+    float b = 2*(o.x*d.x + o.y*d.y + o.z*d.z);
+    float c = o.x*o.x + o.y*o.y + o.z*o.z - m_radius*m_radius;
 
     float discriminant = b*b - 4*a*c;
     if (discriminant < 0) return false;
@@ -34,7 +36,8 @@ bool Sphere::intersect(Ray &in_ray, HitInfo *info)
     } else {
         in_ray.max_t = root1;
     }
-    info->primitive = this;
-    info->point = object_to_world(ray(in_ray.max_t));
+    geom->primitive = this;
+    geom->p = object_to_world(ray(in_ray.max_t));
+    geom->n = geom->p - object_to_world.position();
     return true;
 }

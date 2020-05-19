@@ -8,7 +8,7 @@ public:
     Sphere(const Transform &o2w, float radius) : Primitive(o2w) {
         m_radius = radius;
     }
-    bool intersect(Ray &ray, HitInfo *info);
+    bool intersect(Ray &ray, LocalGeometry *geom);
 };
 
 #endif // PRIMITIVES_SPHERE_H

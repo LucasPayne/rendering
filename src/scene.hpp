@@ -2,20 +2,24 @@
 #define SCENE_H
 #include <vector>
 #include "primitives.hpp"
+#include "illumination.hpp"
 
 class Scene {
 private:
     // Primitive root;
 public:
-
     std::vector<Primitive *> primitives;
+    std::vector<Light *> lights;
 
-    Scene() {}
-    Scene(int num_primitives) {
-        primitives = std::vector<Primitive *>(num_primitives);
+    Scene() {
+        primitives = std::vector<Primitive *>(0);
+        lights = std::vector<Light *>(0);
     }
-    void add_primitive(Primitive *prim) {
+    inline void add_primitive(Primitive *prim) {
         primitives.push_back(prim);
+    }
+    inline void add_light(Light *light) {
+        lights.push_back(light);
     }
 };
 

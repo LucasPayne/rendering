@@ -47,6 +47,10 @@ public:
     inline Transform inverse() const {
         return Transform(inverse_matrix, matrix);
     }
+    inline Point position() const {
+        // This assumes that the matrix is affine.
+        return Point(matrix[3][0], matrix[3][1], matrix[3][2]);
+    };
 
     // Static methods.
     static Transform lookat(const Point &origin, const Point &lookat, const Vector &up);

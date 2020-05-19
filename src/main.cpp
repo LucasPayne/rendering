@@ -19,29 +19,10 @@ typedef glm::vec3 vec3;
 typedef glm::vec4 vec4;
 typedef glm::mat4x4 mat4x4;
 // Project includes.
-#include "illumination.hpp"
-#include "mathematics.hpp"
-#include "primitives.hpp"
-#include "imaging.hpp"
-#include "scene.hpp"
-#include "renderer.hpp"
+#include "core.hpp"
 
-#define frand() ((1.0 / (RAND_MAX + 1.0)) * rand())
-#define frand_interval(A,B) (( A ) + (( B ) - ( A ))*frand())
-
-// This function should be implemented by a linked program, procedurally describing the scene to be rendered.
-// Scene *make_scene();
-Scene *make_scene() {
-    Scene *scene = new Scene(0);
-
-    for (int i = 0; i < 30; i++) {
-        Sphere *sphere = new Sphere(Transform::translate(frand_interval(-5,5),frand_interval(-5,5),frand_interval(2,10)), frand_interval(0.2,1.8));
-        sphere->TEST_COLOR = RGB(frand(), frand(), frand());
-        scene->add_primitive(sphere);
-    }
-
-    return scene;
-}
+// This function is implemented by a linked program, procedurally describing the scene to be rendered.
+Scene *make_scene();
 
 void init_gl();
 void close_gl();
@@ -142,26 +123,44 @@ void init_loop(Renderer *renderer)
 
 
 // Intersect with a vector of primitives, exhaustively checking every one.
-bool intersect_primitive_vector(Ray &ray, std::vector<Primitive *> &primitives, HitInfo &info)
+bool intersect_primitive_vector(Ray &ray, std::vector<Primitive *> &primitives, LocalGeometry &geom)
 {
-    int len = primitives.size();
-    HitInfo info_per;
+    LocalGeometry geom_per;
     bool hit_any = false;
-    for (int i = 0; i < len; i++) {
-        if (primitives[i]->intersect(ray, &info_per)) {
-            info = info_per;
+    for (Primitive *primitive : primitives) {
+        if (primitive->intersect(ray, &geom_per)) {
+            geom = geom_per;
             hit_any = true;
         }
     }
     return hit_any;
 }
 
+bool ray_hits_surface(Scene &scene, Ray ray)
+{
+    // No intersect predicate method, just use the full one.
+    LocalGeometry geom;
+    return intersect_primitive_vector(ray, scene.primitives, geom);
 
+}
 RGB trace_ray(Scene &scene, Ray ray)
 {
-    HitInfo info;
-    if (intersect_primitive_vector(ray, scene.primitives, info)) {
-        return info.primitive->TEST_COLOR;
+    LocalGeometry geom;
+    if (intersect_primitive_vector(ray, scene.primitives, geom)) {
+        RGB color = RGB(0,0,0);
+        for (Light *light : scene.lights) {
+            Ray light_ray = light->light_ray(geom);
+            if (!ray_hits_surface(scene, light_ray)) {
+                RGB light_color;
+                // "Illumination", not anything scientific.
+                float incoming_illumination = light->illumination(geom, light_color);
+                std::cout << "incoming: " << incoming_illumination << ", color: " << light_color << "\n";
+                color += incoming_illumination * light_color;
+            }
+        }
+        // Modulate with the diffuse color of the surface.
+        color *= RGB(1,0,0);
+        return color;
     }
     return RGB(0,1,0);
 }
@@ -185,7 +184,6 @@ void loop(Renderer &renderer)
     renderer.write_to_ppm("test.ppm");
     exit(EXIT_SUCCESS);
 }
-
 
 int main(int argc, char *argv[])
 {
