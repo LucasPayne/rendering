@@ -132,15 +132,15 @@ RGB trace_ray(Scene &scene, Ray ray)
         // std::cout << geom.n << "\n";
         // getchar();
         // return RGB(geom.p.x, geom.p.y,0);
-        //return RGB(n.x, n.y, n.z);
+        // return RGB(n.x, n.y, n.z);
 
         RGB color = RGB(0,0,0);
         for (Light *light : scene.lights) {
             Vector light_vector;
 	    VisibilityTester visibility_tester;
             RGB light_radiance = light->radiance(geom.p, &light_vector, &visibility_tester);
-            //if (visibility_tester.unoccluded(scene)) {
-            if (true) {
+            if (visibility_tester.unoccluded(scene)) {
+            // if (true) {
                 float cos_theta = glm::dot(light_vector, n);
                 color += light_radiance * (cos_theta < 0 ? 0 : cos_theta);
             }

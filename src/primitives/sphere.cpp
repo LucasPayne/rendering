@@ -33,18 +33,15 @@ bool Sphere::intersect(Ray &in_ray, LocalGeometry *geom)
     std::cout << "root 1: " << root1 << "\n";
     std::cout << "root 2: " << root2 << "\n";
 
-    float t;
     if (root1 < ray.min_t || root1 > ray.max_t) {
         // Use root2 instead.
         if (root2 < ray.min_t || root2 > ray.max_t) return false;
-        t = root2;
-        // in_ray.max_t = root2;
+        in_ray.max_t = root2;
     } else {
-        t = root1;
-        // in_ray.max_t = root1;
+        in_ray.max_t = root1;
     }
     geom->primitive = this;
-    geom->p = in_ray.o + in_ray.d * t;
+    geom->p = in_ray.o + in_ray.d * in_ray.max_t;
     geom->n = geom->p - object_to_world.position();
     return true;
 }

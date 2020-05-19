@@ -26,7 +26,7 @@ struct VisibilityTester {
     }
     // Set occlusion test to be over a ray, e.g. for directional lights.
     void SetRay(const Point &origin, const Vector &direction) {
-        const float error_shift = 1e-5;
+        const float error_shift = 1e-3;
         ray = Ray(origin, direction);
         ray.min_t = error_shift;
     }
