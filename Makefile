@@ -19,7 +19,7 @@ clean:
 build/libraries/glad.o: libraries/glad/glad.c
 	$(CC) -c $< -o $@ $(CFLAGS)
 
-build/core.o: build/mathematics.o build/primitives.o build/illumination.o build/imaging.o build/scene.o build/renderer.o
+build/core.o: build/mathematics.o build/primitives.o build/illumination.o build/imaging.o build/scene.o build/renderer.o build/models.o
 	ld -relocatable -o $@ $^
 
 build/mathematics.o: build/mathematics/geometry.o build/mathematics/transform.o
@@ -29,11 +29,13 @@ build/mathematics/geometry.o: src/mathematics/geometry.cpp src/mathematics/geome
 build/mathematics/transform.o: src/mathematics/transform.cpp src/mathematics/transform.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)
 
-build/primitives.o: build/primitives/primitives.o build/primitives/sphere.o
+build/primitives.o: build/primitives/primitives.o build/primitives/sphere.o build/primitives/triangle_mesh.o
 	ld -relocatable -o $@ $^
 build/primitives/primitives.o: src/primitives/primitives.cpp src/primitives.hpp src/mathematics.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)
 build/primitives/sphere.o: src/primitives/sphere.cpp src/primitives/sphere.hpp src/primitives.hpp
+	$(CC) -c $< -o $@ $(CFLAGS)
+build/primitives/triangle_mesh.o: src/primitives/triangle_mesh.cpp src/primitives/triangle_mesh.hpp src/primitives.hpp src/models.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)
 
 build/imaging.o: build/imaging/camera.o build/imaging/framebuffer.o
@@ -52,8 +54,11 @@ build/illumination/light.o: src/illumination/light.cpp src/illumination/light.hp
 build/illumination/point_light.o: src/illumination/point_light.cpp src/illumination/point_light.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)
 
-build/scene.o: src/scene.hpp src/scene/scene.cpp src/mathematics.hpp src/primitives.hpp
-	$(CC) -c src/scene/scene.cpp -o $@ $(CFLAGS)
+build/scene.o: src/scene/scene.cpp src/scene.hpp src/mathematics.hpp src/primitives.hpp
+	$(CC) -c $< -o $@ $(CFLAGS)
 
-build/renderer.o: src/renderer.hpp src/renderer/renderer.cpp
-	$(CC) -c src/renderer/renderer.cpp -o $@ $(CFLAGS)
+build/renderer.o: src/renderer/renderer.cpp src/renderer.hpp
+	$(CC) -c $< -o $@ $(CFLAGS)
+
+build/models.o: src/models/models.cpp src/models.hpp src/primitives.hpp src/illumination/color.hpp src/mathematics.hpp
+	$(CC) -c $< -o $@ $(CFLAGS)

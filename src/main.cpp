@@ -121,8 +121,6 @@ void init_loop(Renderer *renderer)
     }
 }
 
-
-
 RGB trace_ray(Scene &scene, Ray ray)
 {
     LocalGeometry geom;
@@ -140,7 +138,6 @@ RGB trace_ray(Scene &scene, Ray ray)
 	    VisibilityTester visibility_tester;
             RGB light_radiance = light->radiance(geom.p, &light_vector, &visibility_tester);
             if (visibility_tester.unoccluded(scene)) {
-            // if (true) {
                 float cos_theta = glm::dot(light_vector, n);
                 color += light_radiance * (cos_theta < 0 ? 0 : cos_theta);
             }

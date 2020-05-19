@@ -41,5 +41,6 @@ public:
 bool intersect_primitive_vector(Ray &ray, std::vector<Primitive *> &primitives, LocalGeometry *geom);
 
 #include "primitives/sphere.hpp"
+#include "primitives/triangle_mesh.hpp"
 
 #endif // PRIMITIVES_H

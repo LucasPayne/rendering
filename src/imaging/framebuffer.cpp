@@ -1,5 +1,6 @@
 #include "imaging/framebuffer.hpp"
 #include <fstream>
+#include <string>
 
 void FrameBuffer::write_to_ppm(std::string const &filename)
 {

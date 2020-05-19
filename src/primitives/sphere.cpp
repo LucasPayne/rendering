@@ -30,8 +30,8 @@ bool Sphere::intersect(Ray &in_ray, LocalGeometry *geom)
         root1 = root2;
         root2 = temp;
     }
-    std::cout << "root 1: " << root1 << "\n";
-    std::cout << "root 2: " << root2 << "\n";
+    // std::cout << "root 1: " << root1 << "\n";
+    // std::cout << "root 2: " << root2 << "\n";
 
     if (root1 < ray.min_t || root1 > ray.max_t) {
         // Use root2 instead.

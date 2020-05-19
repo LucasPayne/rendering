@@ -1,5 +1,6 @@
 #ifndef PRIMITIVES_SPHERE_H
 #define PRIMITIVES_SPHERE_H
+#include "primitives.hpp"
 
 class Sphere : public Primitive {
 private:

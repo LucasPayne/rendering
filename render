@@ -9,6 +9,6 @@ if [[ $# -ne 1 ]] ; then
 else
     name=$1
     make build/rays.o
-    ( $cc "scenes/$name.cpp" build/rays.o -o "build/executables/render_$name" $cflags && "./build/executables/render_$name")
+    ( $cc "scenes/$name.cpp" build/rays.o -o "build/executables/render_$name" $cflags && "./build/executables/render_$name" && convert test.ppm test.png && feh test.png)
 fi
 
