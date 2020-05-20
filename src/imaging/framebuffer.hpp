@@ -23,12 +23,12 @@ public:
     inline void set(int index_i, int index_j, RGB rgb) {
         data[index_i * m_height + index_j] = rgb;
     }
-    void write_to_ppm(std::string const &filename);
     int width() const {
         return m_width;
     }
     int height() const {
         return m_height;
     }
+    void write_to_ppm(std::string const &filename);
 };
 #endif // IMAGING_FRAMEBUFFER_H

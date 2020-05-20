@@ -9,9 +9,9 @@
 CC=g++ -g -Isrc -Ilibraries
 CFLAGS=-lm -lglfw3 -lGL -lX11 -ldl -lpthread -lrt
 
-build/rays.o: src/main.cpp build/libraries/glad.o build/core.o build/gl.o
+build/rays.o: src/main.cpp build/libraries/glad.o build/core.o build/gl_core.o
 	$(CC) -c src/main.cpp -o build/main.o $(CFLAGS)
-	ld -relocatable -o $@ build/main.o build/libraries/glad.o build/core.o build/gl.o
+	ld -relocatable -o $@ build/main.o build/libraries/glad.o build/core.o build/gl_core.o
 
 clean:
 	rm build/**/*.o
@@ -63,5 +63,9 @@ build/renderer.o: src/renderer/renderer.cpp src/renderer.hpp
 build/models.o: src/models/models.cpp src/models.hpp src/primitives.hpp src/illumination/color.hpp src/mathematics.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)
 
-build/gl.o: src/gl/gl.cpp src/gl.hpp 
+build/gl_core.o: build/gl.o build/gl/gl_texture.o
+	ld -relocatable -o $@ $^
+build/gl.o: src/gl/gl.cpp src/gl.hpp
+	$(CC) -c $< -o $@ $(CFLAGS)
+build/gl/gl_texture.o: src/gl/gl_texture.cpp src/gl/gl_texture.hpp src/gl.hpp src/imaging/framebuffer.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)

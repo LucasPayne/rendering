@@ -1,5 +1,5 @@
-#ifndef INTERACTIVE_GL_H
-#define INTERACTIVE_GL_H
+#ifndef GL_CORE_H
+#define GL_CORE_H
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <string>
@@ -14,6 +14,14 @@ extern float dt;
 typedef void (*KeyCallback)(int key, int action);
 typedef void (*CursorPositionCallback)(double x, double y);
 typedef void (*MouseButtonCallback)(int button, int action);
+
+
+// A Looper can encpasulate its own data, so is a sort of parameterized function.
+// The OpenGLContext holds a list of these.
+struct Looper {
+    Looper () {}
+    virtual void loop() = 0;
+};
 
 class OpenGLContext {
 private:
@@ -32,6 +40,8 @@ private:
     std::vector<KeyCallback> m_key_callbacks;
     std::vector<CursorPositionCallback> m_cursor_position_callbacks;
     std::vector<MouseButtonCallback> m_mouse_button_callbacks;
+
+    std::vector<Looper *> m_loopers;
 
     int m_resolution_x;
     int m_resolution_y;
@@ -71,6 +81,14 @@ public:
         m_mouse_button_callbacks.push_back(callback);
         return callback;
     }
+
+    Looper *add_looper(Looper *looper) {
+        m_loopers.push_back(looper);
+        return looper;
+    }
+
 };
 
-#endif // INTERACTIVE_GL_H
+#include "gl/gl_texture.hpp"
+
+#endif // GL_CORE_H

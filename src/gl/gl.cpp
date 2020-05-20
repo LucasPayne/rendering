@@ -1,3 +1,4 @@
+#include "core.hpp" //--- this dependence might be avoided somehow.
 #include "gl.hpp"
 #include <iostream>
 
@@ -74,8 +75,10 @@ void OpenGLContext::enter_loop()
         glClear(GL_COLOR_BUFFER_BIT);
         glDisable(GL_SCISSOR_TEST);
 
-        // loop_function(renderer);
-        printf("Goin!\n");
+
+        for (Looper *looper : m_loopers) {
+            looper->loop();
+        }
 
         glFlush();
         glfwSwapBuffers(m_glfw_window);
