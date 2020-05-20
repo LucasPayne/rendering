@@ -1,27 +1,67 @@
 #include "core.hpp"
 #include "gl.hpp"
 
-class RenderLoop : public Looper {
-    int m_n;
+class FrameBufferViewerLoop : public Looper {
+    GLTexture texture;
+
+    GLuint quad_vao;
+    GLuint vertices_vbo;
+    GLuint texcoords_vbo;
+
+    GLShaderProgram shader_program;
+
 public:
-    RenderLoop(int n) : m_n{n} {}
+    FrameBufferViewerLoop(FrameBuffer &fb)
+    {
+        texture = GLTexture(fb);
+
+        shader_program = GLShaderProgram("shaders/passthrough.vert", "shaders/texture.frag");
+
+        glGenVertexArrays(1, &quad_vao);
+        glBindVertexArray(quad_vao);
+
+        glEnableVertexAttribArray(0); // Positions.
+        glEnableVertexAttribArray(1); // Texture coordinates.
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void *) 0);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void *) 0);
+
+        glGenBuffers(1, &vertices_vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, vertices_vbo);
+        const float vertices[3 * 4] = {
+            -1,-1,0.5,
+            1,-1,0.5,
+            1,1,0.5,
+            -1,1,0.5,
+        };
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+        glGenBuffers(1, &texcoords_vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, texcoords_vbo);
+        const float texcoords[2 * 4] = {
+            0,0,
+            1,0,
+            1,1,
+            0,1,
+        };
+        glBufferData(GL_ARRAY_BUFFER, sizeof(texcoords), texcoords, GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindVertexArray(0);
+    }
     void loop();
 };
-void RenderLoop::loop() {
-    std::cout << "Yeahhhh boi the number is " << m_n << "\n";
+void FrameBufferViewerLoop::loop() {
+    std::cout << "Yeahhhh boi the texture id is " << texture.ID() << "\n";
 }
 
 void main_program(int argc, char *argv[], Renderer *renderer)
 {
-
-    OpenGLContext context = OpenGLContext("Progressive view", 512, 512);
-    context.add_looper(new RenderLoop(44));
-    context.open();
-
     renderer->render();
     FrameBuffer fb = renderer->downsampled_framebuffer();
 
-    GLTexture tex(fb);
+    OpenGLContext context("Progressive view", 512, 512);
+    context.open();
+    context.add_looper(new FrameBufferViewerLoop(fb));
 
     context.enter_loop();
     context.close();

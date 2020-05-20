@@ -63,9 +63,11 @@ build/renderer.o: src/renderer/renderer.cpp src/renderer.hpp
 build/models.o: src/models/models.cpp src/models.hpp src/primitives.hpp src/illumination/color.hpp src/mathematics.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)
 
-build/gl_core.o: build/gl.o build/gl/gl_texture.o
+build/gl_core.o: build/gl.o build/gl/gl_texture.o build/gl/gl_shader_program.o
 	ld -relocatable -o $@ $^
 build/gl.o: src/gl/gl.cpp src/gl.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)
 build/gl/gl_texture.o: src/gl/gl_texture.cpp src/gl/gl_texture.hpp src/gl.hpp src/imaging/framebuffer.hpp
+	$(CC) -c $< -o $@ $(CFLAGS)
+build/gl/gl_shader_program.o: src/gl/gl_shader_program.cpp src/gl/gl_shader_program.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)
