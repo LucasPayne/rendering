@@ -2,20 +2,23 @@
 #include "gl.hpp"
 
 class FrameBufferViewerLoop : public Looper {
+private:
     GLTexture texture;
 
     GLuint quad_vao;
     GLuint vertices_vbo;
     GLuint texcoords_vbo;
 
-    GLShaderProgram shader_program;
+    GLint uniform_location_image;
 
+    GLShaderProgram shader_program;
 public:
     FrameBufferViewerLoop(FrameBuffer &fb)
     {
         texture = GLTexture(fb);
 
         shader_program = GLShaderProgram("gl_shaders/passthrough_3U.vert", "gl_shaders/texture.frag");
+        uniform_location_image = glGetUniformLocation(shader_program.ID(), "image");
 
         glGenVertexArrays(1, &quad_vao);
         glBindVertexArray(quad_vao);
@@ -52,6 +55,12 @@ public:
 };
 void FrameBufferViewerLoop::loop() {
     std::cout << "Yeahhhh boi the texture id is " << texture.ID() << "\n";
+
+    shader_program.bind();
+    glUniform1i(uniform_location_image, 0);
+    texture.bind(0);
+    glBindVertexArray(quad_vao);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
 void main_program(int argc, char *argv[], Renderer *renderer)

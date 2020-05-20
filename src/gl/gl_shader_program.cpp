@@ -59,9 +59,7 @@ GLShader::GLShader(GLenum shader_type, std::string const &shader_path)
 
 GLShaderProgram::GLShaderProgram(std::string const &vertex_shader_path, std::string const &fragment_shader_path)
 {
-    std::cout << "Creating vertex shader ...\n";
     m_vertex_shader = GLShader(GL_VERTEX_SHADER, vertex_shader_path);
-    std::cout << "Creating fragment shader ...\n";
     m_fragment_shader = GLShader(GL_FRAGMENT_SHADER, fragment_shader_path);
     m_gl_shader_program_id = glCreateProgram();
     if (m_gl_shader_program_id == 0) {

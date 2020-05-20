@@ -32,6 +32,12 @@ public:
     GLuint ID() const {
         return m_gl_shader_program_id;
     }
+    void bind() const {
+        glUseProgram(m_gl_shader_program_id);
+    }
+    void unbind() const {
+        glUseProgram(0);
+    }
 };
 
 #endif // GL_GL_SHADER_PROGRAM_H
