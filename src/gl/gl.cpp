@@ -62,6 +62,10 @@ void OpenGLContext::enter_loop()
         m_time = glfwGetTime();
         m_dt = m_time - m_last_time;
 
+        // Set the globals for convenience (there is only ever one context anyway).
+        dt = m_dt;
+        total_time = m_time;
+
         // Clearing: window clear to background color, viewport clear to the foreground color.
         glClearColor(0,0,0,1);
         glDisable(GL_SCISSOR_TEST);

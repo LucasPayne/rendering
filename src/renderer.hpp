@@ -9,13 +9,17 @@
 struct RenderingState {
     int i, j; // Indices in the render loop.
     bool done;
-    RenderingState() :
+    RenderingState() {
         // Initial state.
-        i{0}, j{0}, done{false}
-    {}
-    RenderingState(int _i, int _j, bool _done = false) :
-        i{_i}, j{_j}, done{_done}
-    {}
+        i = 0;
+        j = 0;
+        done = false;
+    }
+    RenderingState(int _i, int _j, bool _done = false) {
+        i = _i;
+        j = _j;
+        done = _done;
+    }
 };
 
 // A Renderer encapsulates the Scene and Camera, and other things rendered and used for rendering.
@@ -93,6 +97,9 @@ public:
     }
     FrameBuffer *active_framebuffer() {
         return &m_frames[m_active_frame];
+    }
+    void clear_active_framebuffer(RGB color = RGB(0,0,0)) {
+        m_frames[m_active_frame].clear(color);
     }
 };
 

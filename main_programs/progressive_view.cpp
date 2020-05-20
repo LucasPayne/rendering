@@ -4,11 +4,14 @@
 // This timer is set as the should-yield function in the rendering loop.
 bool frame_time_has_passed()
 {
+    #define FRAME_TIME ( 1.0 / 24.0 )
     static bool g_time_set = false;
     static float g_time = 0.f;
     static float g_timer = 0.f;
-    #define FRAME_TIME ( 1.0 / 60.0 )
-    if (!g_time_set) g_time = glfwGetTime();
+    if (!g_time_set) {
+        g_time = glfwGetTime();
+        g_time_set = true;
+    }
     float new_time = glfwGetTime();
     g_timer += new_time - g_time;
     g_time = new_time;
@@ -80,14 +83,16 @@ public:
     void loop();
 };
 void FrameBufferViewerLoop::loop() {
-    // std::cout << "Yeahhhh boi the texture id is " << texture.ID() << "\n";
-    // std::cout << "Yeahhhh boi the shader program id is " << shader_program.ID() << "\n";
-    // std::cout << "Yeahhhh boi the quad vao id is " << quad_vao << "\n";
-
+    
     if (rendering) {
         rendering_state = renderer->render(rendering_state);
-        // rendering = rendering_state.done;
+        if (rendering_state.done) {
+            renderer->clear_active_framebuffer();
+            rendering_state = RenderingState(0,0);
+        }
     }
+    renderer->camera->set_transform(Transform::y_rotation(total_time * (1.0 / 3.0)));
+
     texture.destroy();
     texture = GLTexture(*renderer->active_framebuffer());
 

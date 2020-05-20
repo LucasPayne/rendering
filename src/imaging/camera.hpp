@@ -60,6 +60,10 @@ public:
     inline Point position() const {
         return m_position;
     }
+    void set_transform(Transform transform) {
+        camera_to_world = transform;
+        world_to_camera = transform.inverse();
+    }
 };
 
 #endif // IMAGING_CAMERA_H

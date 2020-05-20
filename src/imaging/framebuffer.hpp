@@ -30,5 +30,14 @@ public:
         return m_height;
     }
     void write_to_ppm(std::string const &filename);
+
+    void clear(RGB color = RGB(0,0,0)) {
+        //- could optimize for zero-setting.
+        for (int i = 0; i < m_width; i++) {
+            for (int j = 0; j < m_height; j++) {
+                data[i*m_height + j] = color;
+            }
+        }
+    }
 };
 #endif // IMAGING_FRAMEBUFFER_H
