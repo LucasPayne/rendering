@@ -90,5 +90,6 @@ public:
 };
 
 #include "gl/gl_texture.hpp"
+#include "gl/gl_shader_program.hpp"
 
 #endif // GL_CORE_H

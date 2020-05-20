@@ -15,7 +15,7 @@ public:
     {
         texture = GLTexture(fb);
 
-        shader_program = GLShaderProgram("shaders/passthrough.vert", "shaders/texture.frag");
+        shader_program = GLShaderProgram("gl_shaders/passthrough_3U.vert", "gl_shaders/texture.frag");
 
         glGenVertexArrays(1, &quad_vao);
         glBindVertexArray(quad_vao);

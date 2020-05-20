@@ -10,7 +10,7 @@ private:
     GLenum m_gl_shader_type;
 public:
     GLShader() {}
-    GLShader(GLShaderType shader_type, std::string const &shader_path);
+    GLShader(GLenum shader_type, std::string const &shader_path);
 
     GLuint ID() const {
         return m_gl_shader_id;
