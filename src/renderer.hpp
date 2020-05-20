@@ -48,6 +48,8 @@ public:
     void render();
 
     FrameBuffer downsampled_framebuffer();
+    // Alternatively, downsample to a framebuffer provided by the caller.
+    void downsample_to_framebuffer(FrameBuffer *framebuffer);
     void write_to_ppm(std::string const &filename);
 
     inline const int pixels_x() const {

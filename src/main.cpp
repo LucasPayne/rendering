@@ -31,7 +31,7 @@ extern Scene *make_scene();
    whatever purpose (progressive viewing, animation, interactive hardware rendering
    with progressively raytraced overlay, rendering environment maps, etc.)
 --------------------------------------------------------------------------------*/
-extern void main_program(Renderer *renderer);
+extern void main_program(int argc, char *argv[], Renderer *renderer);
 //================================================================================
 
 int main(int argc, char *argv[])
@@ -59,5 +59,5 @@ int main(int argc, char *argv[])
     //--------------------------------------------------------------------------------
 
     // This main program is for a simple viewer of a single frame being rendered.
-    main_program(renderer);
+    main_program(argc, argv, renderer);
 }

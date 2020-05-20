@@ -3,12 +3,16 @@
 #include "imaging.hpp"
 #include "scene.hpp"
 #include "renderer.hpp"
+#include <stdio.h>
 
-FrameBuffer Renderer::downsampled_framebuffer()
+void Renderer::downsample_to_framebuffer(FrameBuffer *downsampled_fb)
 {
+    if (   downsampled_fb->width()  != m_downsampled_horizontal_pixels
+        || downsampled_fb->height() != m_downsampled_vertical_pixels) {
+        std::cerr << "ERROR: Attempted to downsample to incorrectly-sized framebuffer.";
+        exit(EXIT_FAILURE);
+    }
     FrameBuffer &fb = m_frames[m_active_frame];
-
-    FrameBuffer downsampled_fb(m_downsampled_horizontal_pixels, m_downsampled_vertical_pixels);
     int ss = m_supersample_width;
     float inv_num_samples = 1.0 / (ss * ss);
     for (int i = 0; i < m_downsampled_horizontal_pixels; i++) {
@@ -22,9 +26,14 @@ FrameBuffer Renderer::downsampled_framebuffer()
                 }
             }
             color *= inv_num_samples;
-            downsampled_fb.set(i, j, color);
+            downsampled_fb->set(i, j, color);
         }
     }
+}
+FrameBuffer Renderer::downsampled_framebuffer()
+{
+    FrameBuffer downsampled_fb(m_downsampled_horizontal_pixels, m_downsampled_vertical_pixels);
+    downsample_to_framebuffer(&downsampled_fb);
     return downsampled_fb;
 }
 void Renderer::write_to_ppm(std::string const &filename)

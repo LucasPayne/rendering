@@ -24,5 +24,11 @@ public:
         data[index_i * m_height + index_j] = rgb;
     }
     void write_to_ppm(std::string const &filename);
+    int width() const {
+        return m_width;
+    }
+    int height() const {
+        return m_height;
+    }
 };
 #endif // IMAGING_FRAMEBUFFER_H
