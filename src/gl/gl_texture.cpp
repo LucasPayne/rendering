@@ -16,7 +16,7 @@ GLTexture::GLTexture(FrameBuffer &fb)
                 float clamped = fb(i, j)[k];
                 if (clamped < 0.f) clamped = 0.f;
                 else if (clamped > 1.f) clamped = 1.f;
-                ubyte_data[3*i*h + 3*j + k] = (int) (255 * clamped);
+                ubyte_data[3*j*w + 3*i + k] = (int) (255 * clamped);
             }
         }
     }

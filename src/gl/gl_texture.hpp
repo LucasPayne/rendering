@@ -25,6 +25,9 @@ public:
         glActiveTexture(GL_TEXTURE0 + m_bound_to_texture_unit);
         glBindTexture(GL_TEXTURE_2D, 0);
     }
+    void destroy() {
+        glDeleteTextures(1, &m_gl_texture_id);
+    }
 };
 
 #endif // GL_GL_TEXTURE_H

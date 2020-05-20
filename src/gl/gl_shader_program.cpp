@@ -15,25 +15,19 @@ GLShader::GLShader(GLenum shader_type, std::string const &shader_path)
         std::cerr << "ERROR: Failed to open shader \"" << shader_path << "\".\n";
         exit(EXIT_FAILURE);
     }
-    std::cout << "Reading in file ...\n";
     fseek(file, 0, SEEK_END);
     size_t source_size = ftell(file) + 1;
     char *source = new char[source_size];
     rewind(file);
     fread(source, sizeof(char), source_size-1, file);
     source[source_size-1] = '\0';
-    std::cout << "Done\n";
 
-    puts(source);
-    std::cout << m_gl_shader_id << "\n";
-    
     m_gl_shader_type = shader_type;
     m_gl_shader_id = glCreateShader(shader_type);
     if (m_gl_shader_id == 0) {
         std::cerr << "ERROR: Failed to create a shader ID.\n";
         exit(EXIT_FAILURE);
     }
-    std::cout << "Created shader\n";
     glShaderSource(m_gl_shader_id, 1, (const GLchar **) &source, NULL);
     delete[] source;
     fclose(file);

@@ -41,28 +41,29 @@ void Renderer::write_to_ppm(std::string const &filename)
     // Write to an image file, but downsample first.
     FrameBuffer downsampled_fb = downsampled_framebuffer();
     downsampled_fb.write_to_ppm(filename);
-    //-----------------------delete the vector memory in the FrameBuffer?
 }
 
-void Renderer::render()
+RenderingState Renderer::render(RenderingState state) //---get optional argument working.
 {
     float x, y;
     Point p;
     Ray ray;
-    for (int i = 0; i < pixels_x(); i++) {
-        for (int j = 0; j < pixels_y(); j++) {
+    for (int i = state.i; i < pixels_x(); i++) {
+        for (int j = state.j; j < pixels_y(); j++) {
             x = pixels_x_inv() * i;
             y = 1 - pixels_y_inv() * j;
-
             p = camera->lens_point(x, y);
-
             // std::cout << "Tracing ray (" << x << ", " << y << ")\n";
             // std::cout << "Lens point: " << p << "\n";
-
             ray = Ray(camera->position(), p - camera->position());
             set_pixel(i, j, trace_ray(ray));
+
+            // if (rendering_should_yield != NULL && rendering_should_yield()) {
+            //     return RenderingState(i, j);
+            // }
         }
     }
+    return state; // The rendering has finished.
 }
 
 RGB Renderer::trace_ray(Ray ray)

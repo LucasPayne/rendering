@@ -5,6 +5,19 @@
 #include "imaging.hpp"
 #include "scene.hpp"
 
+// The Renderer can act as a coroutine, allowing
+struct RenderingState {
+    int i, j; // Indices in the render loop.
+    bool done;
+    RenderingState() :
+        // Initial state.
+        i{0}, j{0}, done{false}
+    {}
+    RenderingState(int _i, int _j, bool _done = false) :
+        i{_i}, j{_j}, done{_done}
+    {}
+};
+
 // A Renderer encapsulates the Scene and Camera, and other things rendered and used for rendering.
 class Renderer {
 private:
@@ -20,11 +33,14 @@ private:
 
     int m_active_frame;
     std::vector<FrameBuffer> m_frames;
+
+    bool (*rendering_should_yield)(); //= NULL?
 public:
     Scene *scene;
     Camera *camera;
 
     Renderer(Scene *_scene, Camera *_camera, int horizontal_pixels, int supersample_width = 1) {
+        rendering_should_yield = NULL;
         scene = _scene;
         camera = _camera;
         m_supersample_width = supersample_width;
@@ -42,10 +58,18 @@ public:
         m_frames[0] = FrameBuffer(m_supersample_width * m_horizontal_pixels, m_supersample_width * m_vertical_pixels);
         m_active_frame = 0;
     }
+    // If the yield test is set, a callback is triggered in the rendering loop, so the caller can force rendering to stop at a certain point,
+    // then resume with another call to render() passing the state previously returned by render().
+    void set_yield_test(bool (*yield_test)()) {
+        rendering_should_yield = yield_test;
+    }
 
     RGB trace_ray(Ray ray);
 
-    void render();
+    RenderingState render(RenderingState state);
+    RenderingState render() {
+        render(RenderingState());
+    }
 
     FrameBuffer downsampled_framebuffer();
     // Alternatively, downsample to a framebuffer provided by the caller.
@@ -66,6 +90,9 @@ public:
     }
     inline void set_pixel(int index_i, int index_j, RGB rgb) {
         m_frames[m_active_frame].set(index_i, index_j, rgb);
+    }
+    FrameBuffer *active_framebuffer() {
+        return &m_frames[m_active_frame];
     }
 };
 
