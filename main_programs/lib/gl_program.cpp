@@ -39,8 +39,6 @@ void gl_program(int argc, char *argv[]);
     The loop provided by the user program.
 --------------------------------------------------------------------------------*/
 void gl_program_loop(Renderer *renderer);
-
-//--callbacks. How would optional callbacks be added?
 //================================================================================
 
 void init_loop(Renderer *renderer);

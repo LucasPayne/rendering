@@ -38,6 +38,7 @@ void OpenGLContext::open()
     glfwSetFramebufferSizeCallback(m_glfw_window, glfw_reshape);
 
     g_context_active = true;
+    g_opengl_context = this;
 }
 void OpenGLContext::close()
 {
