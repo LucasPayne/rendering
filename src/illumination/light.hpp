@@ -30,7 +30,7 @@ struct VisibilityTester {
         ray = Ray(origin, direction);
         ray.min_t = error_shift;
     }
-    bool unoccluded(Scene &scene) const;
+    bool unoccluded(Scene *scene) const;
 };
 
 /*

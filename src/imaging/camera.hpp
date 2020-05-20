@@ -1,5 +1,7 @@
 #ifndef IMAGING_CAMERA_H
 #define IMAGING_CAMERA_H
+#include "mathematics.hpp"
+
 class Camera {
 private:
     float m_near_plane_distance;

@@ -1,6 +1,7 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 #include <vector>
+#include <string>
 #include "imaging.hpp"
 #include "scene.hpp"
 
@@ -11,7 +12,7 @@ private:
     int m_downsampled_vertical_pixels;
     int m_horizontal_pixels;
     int m_vertical_pixels;
-    int m_supersample_width;
+    int m_supersample_width; // A square of supersamples are used, with this width x width.
 
     // Raster-space--screen-space conversions are made a lot, so cache the inverses of the pixel extents.
     float m_horizontal_pixels_inv;
@@ -41,6 +42,14 @@ public:
         m_frames[0] = FrameBuffer(m_supersample_width * m_horizontal_pixels, m_supersample_width * m_vertical_pixels);
         m_active_frame = 0;
     }
+
+    RGB trace_ray(Ray ray);
+
+    void render();
+
+    FrameBuffer downsampled_framebuffer();
+    void write_to_ppm(std::string const &filename);
+
     inline const int pixels_x() const {
         return m_horizontal_pixels;
     }
@@ -55,28 +64,6 @@ public:
     }
     inline void set_pixel(int index_i, int index_j, RGB rgb) {
         m_frames[m_active_frame].set(index_i, index_j, rgb);
-    }
-    void write_to_ppm(std::string const &filename)
-    {
-        FrameBuffer &fb = m_frames[m_active_frame];
-
-        FrameBuffer downsampled_fb(m_downsampled_horizontal_pixels, m_downsampled_vertical_pixels);
-        int ss = m_supersample_width;
-        for (int i = 0; i < m_downsampled_horizontal_pixels; i++) {
-            for (int j = 0; j < m_downsampled_vertical_pixels; j++) {
-                RGB color(0,0,0);
-                for (int ssi = 0; ssi < ss; ssi++) {
-                    for (int ssj = 0; ssj < ss; ssj++) {
-                        int ip = ss * i + ssi;
-                        int jp = ss * j + ssj;
-                        color += fb(ip, jp);
-                    }
-                }
-                color /= ss * ss;
-                downsampled_fb.set(i, j, color);
-            }
-        }
-        downsampled_fb.write_to_ppm(filename);
     }
 };
 

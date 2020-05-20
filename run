@@ -1,0 +1,28 @@
+#!/bin/bash
+
+cc="g++ -g -Isrc -Ilibraries"
+cflags="-lm -lglfw3 -lGL -lX11 -ldl -lpthread -lrt"
+
+if [[ $# -ne 2 ]] ; then
+    echo "give good args"
+    exit 0
+else
+    main_program_name=$1
+    scene_name=$2
+
+    if [ ! -f "main_programs/$main_program_name.cpp" ] ; then
+        echo "Main program \"$main_program_name\" does not exist. A main program should have a .cpp file in the main_programs/ directory."
+        exit 1
+    fi
+    if [ ! -f "scenes/$scene_name.cpp" ] ; then
+        echo "Scene \"$scene_name\" does not exist. A scene should have a .cpp file in the scenes/ directory."
+        exit 1
+    fi
+
+    # Make the core program.
+    exe_name="build/executables/render_program"
+    
+    make build/rays.o
+    ( $cc "main_programs/$main_program_name.cpp" "scenes/$scene_name.cpp" build/rays.o -o $exe_name $cflags && ./$exe_name )
+fi
+
