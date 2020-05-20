@@ -85,37 +85,6 @@ void close_gl()
 void enter_loop(void (*loop_function)(Renderer *), Renderer *renderer)
 {
     static float last_time;
-    while (!glfwWindowShouldClose(window))
-    {
-        glfwPollEvents();
-
-        last_time = total_time;
-        total_time = glfwGetTime();
-        dt = total_time - last_time;
-
-        // Clearing: window clear to background color, viewport clear to the foreground color.
-        glClearColor(0,0,0,1);
-        glDisable(GL_SCISSOR_TEST);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        GLint viewport[4];
-        glGetIntegerv(GL_VIEWPORT, viewport);
-        glEnable(GL_SCISSOR_TEST);
-        glScissor(viewport[0], viewport[1], viewport[2], viewport[3]);
-        glClearColor(1,1,1,1);
-        glClear(GL_COLOR_BUFFER_BIT);
-        glDisable(GL_SCISSOR_TEST);
-
-        loop_function(renderer);
-
-        glFlush();
-        glfwSwapBuffers(window);
-        
-//---
-        // renderer->render();
-        //renderer->write_to_ppm("test.ppm");
-        //exit(EXIT_SUCCESS);
-    }
 }
 
 void main_program(int argc, char *argv[], Renderer *renderer)
