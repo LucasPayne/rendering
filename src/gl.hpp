@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+
 // The active OpenGLContext updates these global values.
 // This is for convenience, so that having things with time-dependence doesn't require
 // passing the context around everywhree.
@@ -14,6 +15,7 @@ extern float dt;
 typedef void (*KeyCallback)(int key, int action);
 typedef void (*CursorPositionCallback)(double x, double y);
 typedef void (*MouseButtonCallback)(int button, int action);
+typedef void (*ReshapeCallback)(int width, int height);
 
 
 // A Looper can encpasulate its own data, so is a sort of parameterized function.
@@ -25,9 +27,6 @@ struct Looper {
 
 class OpenGLContext {
 private:
-    // Make sure there is at most one active context.
-    static bool g_context_active;
-    static OpenGLContext *g_opengl_context;
     // It would not make sense to give glfw a pointer to a member function of a class.
     // glfw will instead have these as callbacks, which pass the events to the callbacks of the active context.
     static void glfw_reshape(GLFWwindow *window, int width, int height);
@@ -40,6 +39,7 @@ private:
     std::vector<KeyCallback> m_key_callbacks;
     std::vector<CursorPositionCallback> m_cursor_position_callbacks;
     std::vector<MouseButtonCallback> m_mouse_button_callbacks;
+    std::vector<ReshapeCallback> m_reshape_callbacks;
 
     std::vector<Looper *> m_loopers;
 
@@ -81,6 +81,10 @@ public:
         m_mouse_button_callbacks.push_back(callback);
         return callback;
     }
+    ReshapeCallback add_reshape_callback(ReshapeCallback callback) {
+        m_reshape_callbacks.push_back(callback);
+        return callback;
+    }
 
     Looper *add_looper(Looper *looper) {
         m_loopers.push_back(looper);
@@ -88,6 +92,10 @@ public:
     }
 
 };
+
+// There can only be one.
+extern bool g_context_active;
+extern OpenGLContext *g_opengl_context;
 
 #include "gl/gl_texture.hpp"
 #include "gl/gl_shader_program.hpp"

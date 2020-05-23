@@ -7,15 +7,21 @@
 
 // The Renderer can act as a coroutine, allowing for example progressive viewing.
 struct RenderingState {
-    int i, j; // Indices in the render loop.
+    int pi, pj, i, j; // Indices in the render loop.
+    
     bool done;
     RenderingState() {
         // Initial state.
         i = 0;
         j = 0;
+        pi = 0;
+        pj = 0;
         done = false;
     }
-    RenderingState(int _i, int _j, bool _done = false) {
+    RenderingState(int _pi, int _pj, int _i, int _j, bool _done = false) {
+        // The more rendering state added, the worse this gets.
+        pi = _pi;
+        pj = _pj;
         i = _i;
         j = _j;
         done = _done;

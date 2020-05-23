@@ -5,8 +5,8 @@
 float total_time;
 float dt;
 
-bool OpenGLContext::g_context_active = false;
-OpenGLContext *OpenGLContext::g_opengl_context = NULL;
+bool g_context_active = false;
+OpenGLContext *g_opengl_context = NULL;
 
 void OpenGLContext::open()
 {
@@ -48,8 +48,8 @@ void OpenGLContext::close()
         std::cerr <<  "ERROR: Tried to close OpenGLContext, none is open!\n";
         exit(EXIT_FAILURE);
     }
-    glfwDestroyWindow(m_glfw_window);
     glfwTerminate();
+    glfwDestroyWindow(m_glfw_window);
     g_context_active = false;
 }
 void OpenGLContext::enter_loop()
@@ -96,6 +96,9 @@ void OpenGLContext::enter_loop()
 
 void OpenGLContext::glfw_reshape(GLFWwindow *window, int width, int height)
 {
+    for (const ReshapeCallback &cb : g_opengl_context->m_reshape_callbacks) {
+        cb(width, height);
+    }
 }
 
 void OpenGLContext::glfw_key_callback(GLFWwindow *window, int key,

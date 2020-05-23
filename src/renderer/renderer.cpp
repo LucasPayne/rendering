@@ -50,27 +50,47 @@ RenderingState Renderer::render(RenderingState state) //---get optional argument
     float x, y;
     Point p;
     Ray ray;
-    
+
+    int pattern[8] = { 0, 4, 2, 6, 1, 3, 5, 7 };
+    int p_n = 8;
+
     int start_i = state.i;
     int start_j = state.j;
-    for (int i = start_i; i < pixels_x(); i++) {
-        for (int j = start_j; j < pixels_y(); j++) {
-            start_j = 0; // Make sure that the next loops start at 0.
-            x = pixels_x_inv() * i;
-            y = 1 - pixels_y_inv() * j;
-            p = camera->lens_point(x, y);
-            // std::cout << "Tracing ray (" << x << ", " << y << ")\n";
-            // std::cout << "Lens point: " << p << "\n";
-            ray = Ray(camera->position(), p - camera->position());
-            set_pixel(i, j, trace_ray(ray));
+    int start_pi = state.pi;
+    int start_pj = state.pj;
 
-            if (rendering_should_yield != NULL && rendering_should_yield()) {
-                if (j == pixels_y() - 1) return RenderingState(i+1,0);
-                else return RenderingState(i,j+1);
+    bool yielding = false;
+    bool i_entered = false;
+    bool j_entered = false;
+    bool pj_entered = false;
+
+    for (int pi = start_pi; pi < p_n; pi++) {
+        for (int pj = pj_entered ? 0 : start_pj; pj < p_n; pj++) {
+            pj_entered = true;
+            for (int i = i_entered ? pattern[pi] : start_i; i < pixels_x(); i += p_n) {
+                i_entered = true;
+                for (int j = j_entered ? pattern[pj] : start_j; j < pixels_y(); j += p_n) {
+                    j_entered = true;
+
+                    if (yielding) return RenderingState(pi,pj,i,j);
+
+                    x = pixels_x_inv() * i;
+                    y = 1 - pixels_y_inv() * j;
+                    p = camera->lens_point(x, y);
+                    // std::cout << "Tracing ray (" << x << ", " << y << ")\n";
+                    // std::cout << "Lens point: " << p << "\n";
+                    ray = Ray(camera->position(), p - camera->position());
+                    set_pixel(i, j, trace_ray(ray));
+
+                    if (rendering_should_yield != NULL && rendering_should_yield()) {
+                        // Let the loop itself figure out what the next state is.
+                        yielding = true;
+                    }
+                }
             }
         }
     }
-    return RenderingState(0,0,true); // The rendering has finished.
+    return RenderingState(0,0,0,0,true); // The rendering has finished.
 }
 
 RGB Renderer::trace_ray(Ray ray)

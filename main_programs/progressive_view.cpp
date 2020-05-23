@@ -1,6 +1,32 @@
 #include "core.hpp"
 #include "gl.hpp"
 
+void key(int key, int action)
+{
+    if (action == GLFW_PRESS) {
+        if (key == GLFW_KEY_Q) {
+            g_opengl_context->close();
+            exit(EXIT_SUCCESS);
+        }
+    }
+}
+
+void force_aspect_ratio(int width, int height, double wanted_aspect_ratio)
+{
+    double aspect_ratio = ((double) height) / width;
+    if (aspect_ratio > wanted_aspect_ratio) {
+        glViewport(0, (height - wanted_aspect_ratio * width)/2.0, width, wanted_aspect_ratio * width);
+    }
+    else {
+        glViewport((width - height / wanted_aspect_ratio)/2.0, 0, height / wanted_aspect_ratio,  height);
+    }
+}
+void reshape(int width, int height)
+{
+    float aspect_ratio = 0.566; //------
+    force_aspect_ratio(width, height, aspect_ratio);
+}
+
 // This timer is set as the should-yield function in the rendering loop.
 bool frame_time_has_passed()
 {
@@ -88,12 +114,12 @@ void FrameBufferViewerLoop::loop() {
 
     if (rendering) {
         rendering_state = renderer->render(rendering_state);
+        // if (rendering_state.done) rendering = false;
         if (rendering_state.done) {
-            rendering_state = RenderingState(0,0);
+            rendering_state = RenderingState(0,0,0,0);
             renderer->clear_active_framebuffer();
         }
     }
-    // renderer->render(RenderingState(0,0));
     renderer->camera->set_transform(Transform::y_rotation(total_time * (1.0 / 3.0)));
 
     texture.destroy();
@@ -114,6 +140,8 @@ void main_program(int argc, char *argv[], Renderer *renderer)
     context.open();
     renderer->set_yield_test(frame_time_has_passed);
     context.add_looper(new FrameBufferViewerLoop(renderer));
+    context.add_reshape_callback(reshape);
+    context.add_key_callback(key);
     context.enter_loop();
     context.close();
 }
