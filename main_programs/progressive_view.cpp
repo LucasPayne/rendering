@@ -83,19 +83,21 @@ public:
     void loop();
 };
 void FrameBufferViewerLoop::loop() {
-    
+    static int frame = 0;
+    frame++;
+
     if (rendering) {
         rendering_state = renderer->render(rendering_state);
         if (rendering_state.done) {
-            renderer->clear_active_framebuffer();
             rendering_state = RenderingState(0,0);
+            renderer->clear_active_framebuffer();
         }
     }
+    // renderer->render(RenderingState(0,0));
     renderer->camera->set_transform(Transform::y_rotation(total_time * (1.0 / 3.0)));
 
     texture.destroy();
     texture = GLTexture(*renderer->active_framebuffer());
-
     shader_program.bind();
     glUniform1i(uniform_location_image, 0);
     texture.bind(0);

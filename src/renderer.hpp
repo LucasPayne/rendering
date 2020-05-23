@@ -5,7 +5,7 @@
 #include "imaging.hpp"
 #include "scene.hpp"
 
-// The Renderer can act as a coroutine, allowing
+// The Renderer can act as a coroutine, allowing for example progressive viewing.
 struct RenderingState {
     int i, j; // Indices in the render loop.
     bool done;

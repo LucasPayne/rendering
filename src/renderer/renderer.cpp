@@ -46,18 +46,13 @@ void Renderer::write_to_ppm(std::string const &filename)
 RenderingState Renderer::render(RenderingState state) //---get optional argument working.
 {
     static int counter = 0;
-    int start_i, start_j;
-    if (state.j == pixels_y() - 1) {
-        start_i = state.i + 1;
-        start_j = 0;
-    } else {
-        start_i = state.i;
-        start_j = state.j + 1;
-    }
 
     float x, y;
     Point p;
     Ray ray;
+    
+    int start_i = state.i;
+    int start_j = state.j;
     for (int i = start_i; i < pixels_x(); i++) {
         for (int j = start_j; j < pixels_y(); j++) {
             start_j = 0; // Make sure that the next loops start at 0.
@@ -70,7 +65,8 @@ RenderingState Renderer::render(RenderingState state) //---get optional argument
             set_pixel(i, j, trace_ray(ray));
 
             if (rendering_should_yield != NULL && rendering_should_yield()) {
-                return RenderingState(i,j);
+                if (j == pixels_y() - 1) return RenderingState(i+1,0);
+                else return RenderingState(i,j+1);
             }
         }
     }
