@@ -56,6 +56,10 @@ public:
         return Point(matrix[3][0], matrix[3][1], matrix[3][2]);
     };
 
+    inline Vector transform_normal(const Vector &n) const {
+        return Vector(glm::transpose(inverse_matrix) * vec4(n.x, n.y, n.z, 0));
+    }
+
     // Static methods.
     static Transform lookat(const Point &origin, const Point &lookat, const Vector &up);
     static Transform translate(const Vector &v);

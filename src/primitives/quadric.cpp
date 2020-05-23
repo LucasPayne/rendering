@@ -86,7 +86,20 @@ bool Quadric::intersect(Ray &in_ray, LocalGeometry *geom)
 
     in_ray.max_t = t;
     geom->primitive = this;
-    geom->p = in_ray.o + in_ray.d * in_ray.max_t;
-    geom->n = geom->p - object_to_world.position();
+    geom->p = in_ray.o + in_ray.d * t;
+    // geom->n = geom->p - object_to_world.position();
+
+    float A,B,C,D,E,F,G,H,I,J;
+    A = coefficients[0]; B = coefficients[1]; C = coefficients[2]; D = coefficients[3]; E = coefficients[4];
+    F = coefficients[5]; G = coefficients[6]; H = coefficients[7]; I = coefficients[8]; J = coefficients[9];
+    float x = geom->p.x;
+    float y = geom->p.y;
+    float z = geom->p.z;
+    float pdx = 2*A*x + 2*E*y + 2*F*z + 2*G;
+    float pdy = 2*B*y + 2*E*x + 2*H*z + 2*I;
+    float pdz = 2*C*z + 2*F*x + 2*H*y + 2*J;
+    geom->n = object_to_world.transform_normal(glm::normalize(Vector(pdx, pdy, pdz)));
+    std::cout << geom->n << "\n";
+
     return true;
 }
