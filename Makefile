@@ -22,11 +22,13 @@ build/libraries/glad.o: libraries/glad/glad.c
 build/core.o: build/mathematics.o build/primitives.o build/illumination.o build/imaging.o build/scene.o build/renderer.o build/models.o
 	ld -relocatable -o $@ $^
 
-build/mathematics.o: build/mathematics/geometry.o build/mathematics/transform.o
+build/mathematics.o: build/mathematics/geometry.o build/mathematics/transform.o build/mathematics/numerics.o
 	ld -relocatable -o $@ $^
 build/mathematics/geometry.o: src/mathematics/geometry.cpp src/mathematics/geometry.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)
 build/mathematics/transform.o: src/mathematics/transform.cpp src/mathematics/transform.hpp
+	$(CC) -c $< -o $@ $(CFLAGS)
+build/mathematics/numerics.o: src/mathematics/numerics.cpp src/mathematics/numerics.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)
 
 build/primitives.o: build/primitives/primitives.o build/primitives/sphere.o build/primitives/triangle_mesh.o
