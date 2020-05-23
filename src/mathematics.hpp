@@ -3,6 +3,7 @@
 
 #include "mathematics/geometry.hpp"
 #include "mathematics/transform.hpp"
+#include "mathematics/numerics.hpp"
 
 #endif // MATHEMATICS_H
 
