@@ -7,7 +7,7 @@
 
 class FrameBuffer {
 private:
-    std::vector<RGB> data;
+    std::vector<RGBA> data;
     int m_width;
     int m_height;
 public:
@@ -15,12 +15,12 @@ public:
     FrameBuffer(int width, int height) {
         m_width = width;
         m_height = height;
-        data = std::vector<RGB>(width * height);
+        data = std::vector<RGBA>(width * height);
     }
-    inline RGB operator()(int index_i, int index_j) {
+    inline RGBA operator()(int index_i, int index_j) {
         return data[index_i * m_height + index_j];
     }
-    inline void set(int index_i, int index_j, RGB rgb) {
+    inline void set(int index_i, int index_j, RGBA rgb) {
         data[index_i * m_height + index_j] = rgb;
     }
     int width() const {
@@ -31,7 +31,7 @@ public:
     }
     void write_to_ppm(std::string const &filename);
 
-    void clear(RGB color = RGB(0,0,0)) {
+    void clear(RGBA color = RGBA(0,0,0,0)) {
         //- could optimize for zero-setting.
         for (int i = 0; i < m_width; i++) {
             for (int j = 0; j < m_height; j++) {
@@ -39,5 +39,6 @@ public:
             }
         }
     }
+    void copy_from(const FrameBuffer &fb);
 };
 #endif // IMAGING_FRAMEBUFFER_H

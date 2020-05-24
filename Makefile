@@ -19,7 +19,7 @@ clean:
 build/libraries/glad.o: libraries/glad/glad.c
 	$(CC) -c $< -o $@ $(CFLAGS)
 
-build/core.o: build/mathematics.o build/primitives.o build/illumination.o build/imaging.o build/scene.o build/renderer.o build/models.o
+build/core.o: build/mathematics.o build/primitives.o build/illumination.o build/imaging.o build/scene.o build/renderer.o build/models.o build/interaction.o
 	ld -relocatable -o $@ $^
 
 build/mathematics.o: build/mathematics/geometry.o build/mathematics/transform.o build/mathematics/numerics.o
@@ -67,11 +67,18 @@ build/renderer.o: src/renderer/renderer.cpp src/renderer.hpp
 build/models.o: src/models/models.cpp src/models.hpp src/primitives.hpp src/illumination/color.hpp src/mathematics.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)
 
-build/gl_core.o: build/gl.o build/gl/gl_texture.o build/gl/gl_shader_program.o
+build/gl_core.o: build/gl.o build/gl/gl_texture.o build/gl/gl_shader_program.o build/gl/gl_input.o
 	ld -relocatable -o $@ $^
 build/gl.o: src/gl/gl.cpp src/gl.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)
 build/gl/gl_texture.o: src/gl/gl_texture.cpp src/gl/gl_texture.hpp src/gl.hpp src/imaging/framebuffer.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)
 build/gl/gl_shader_program.o: src/gl/gl_shader_program.cpp src/gl/gl_shader_program.hpp
+	$(CC) -c $< -o $@ $(CFLAGS)
+build/gl/gl_input.o: src/gl/gl_input.cpp src/gl/gl_input.hpp
+	$(CC) -c $< -o $@ $(CFLAGS)
+
+build/interaction.o: build/interaction/player.o
+	ld -relocatable -o $@ $^
+build/interaction/player.o: src/interaction/player.cpp src/interaction/player.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)

@@ -105,6 +105,7 @@ void OpenGLContext::glfw_key_callback(GLFWwindow *window, int key,
                        int scancode, int action,
                        int mods)
 {
+    key_callback_arrows_down(window, key, scancode, action, mods);
     for (const KeyCallback &cb : g_opengl_context->m_key_callbacks) {
         cb(key, action);
     }

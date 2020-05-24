@@ -99,5 +99,6 @@ extern OpenGLContext *g_opengl_context;
 
 #include "gl/gl_texture.hpp"
 #include "gl/gl_shader_program.hpp"
+#include "gl/gl_input.hpp"
 
 #endif // GL_CORE_H

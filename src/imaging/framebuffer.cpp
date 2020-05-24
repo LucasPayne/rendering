@@ -1,6 +1,8 @@
 #include "imaging/framebuffer.hpp"
+#include <iostream>
 #include <fstream>
 #include <string>
+#include <string.h>
 
 void FrameBuffer::write_to_ppm(std::string const &filename)
 {
@@ -39,4 +41,14 @@ void FrameBuffer::write_to_ppm(std::string const &filename)
         file << "\n";
     }
     file.close();
+}
+
+
+void FrameBuffer::copy_from(const FrameBuffer &fb)
+{
+    if (m_width != fb.width() || m_height != fb.height()) {
+        std::cerr << "ERROR: FrameBuffer::copy_from: Cannot copy from framebuffer with non-matching dimensions.\n";
+        exit(EXIT_FAILURE);
+    }
+    memcpy(&data[0], &fb.data[0], sizeof(RGBA)*m_width*m_height);
 }

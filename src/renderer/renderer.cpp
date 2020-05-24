@@ -17,7 +17,7 @@ void Renderer::downsample_to_framebuffer(FrameBuffer *downsampled_fb)
     float inv_num_samples = 1.0 / (ss * ss);
     for (int i = 0; i < m_downsampled_horizontal_pixels; i++) {
         for (int j = 0; j < m_downsampled_vertical_pixels; j++) {
-            RGB color(0,0,0);
+            RGBA color(0,0,0,0);
             for (int ssi = 0; ssi < ss; ssi++) {
                 for (int ssj = 0; ssj < ss; ssj++) {
                     int ip = ss * i + ssi;
@@ -118,5 +118,7 @@ RGB Renderer::trace_ray(Ray ray)
         color *= RGB(1,1,1);
         return color;
     }
-    return RGB(0,1,0);
+    // return RGB(0,1,0);
+    // make a nice blue sky
+    return RGB(0.967,0.97,0.995);
 }

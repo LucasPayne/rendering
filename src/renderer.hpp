@@ -99,12 +99,12 @@ public:
         return m_vertical_pixels_inv;
     }
     inline void set_pixel(int index_i, int index_j, RGB rgb) {
-        m_frames[m_active_frame].set(index_i, index_j, rgb);
+        m_frames[m_active_frame].set(index_i, index_j, RGBA(rgb,1));
     }
     FrameBuffer *active_framebuffer() {
         return &m_frames[m_active_frame];
     }
-    void clear_active_framebuffer(RGB color = RGB(0,0,0)) {
+    void clear_active_framebuffer(RGBA color = RGBA(0,0,0,0)) {
         m_frames[m_active_frame].clear(color);
     }
 };

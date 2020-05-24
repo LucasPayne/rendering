@@ -7,6 +7,7 @@
 #include "imaging.hpp"
 #include "scene.hpp"
 #include "renderer.hpp"
+#include "interaction.hpp"
 
 // Library includes.
 #include <glm/glm.hpp>

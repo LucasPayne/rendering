@@ -1,5 +1,10 @@
 #include "core.hpp"
 #include "gl.hpp"
+#include <math.h>
+
+//---Input and looper functions probably need state!
+Renderer *g_renderer = NULL;
+Player *g_player = NULL;
 
 void key(int key, int action)
 {
@@ -7,6 +12,9 @@ void key(int key, int action)
         if (key == GLFW_KEY_Q) {
             g_opengl_context->close();
             exit(EXIT_SUCCESS);
+        }
+        if (key == GLFW_KEY_R) {
+            g_renderer->write_to_ppm("last_render.ppm");
         }
     }
 }
@@ -54,6 +62,11 @@ private:
     bool rendering;
     Renderer *renderer;
     RenderingState rendering_state;
+    float time_since_render;
+    int num_renders;
+    float average_render_time;
+    
+    Transform last_camera_transform;
 
     GLTexture texture;
 
@@ -62,18 +75,26 @@ private:
     GLuint texcoords_vbo;
 
     GLint uniform_location_image;
+    GLint uniform_location_transparency;
 
     GLShaderProgram shader_program;
+
+    FrameBuffer last_framebuffer;
 public:
     FrameBufferViewerLoop(Renderer *_renderer)
     {
         rendering = true;
         rendering_state = RenderingState();
+        time_since_render = 0;
+        average_render_time = 0;
+        num_renders = 0;
         renderer = _renderer;
+        last_framebuffer = FrameBuffer(renderer->active_framebuffer()->width(), renderer->active_framebuffer()->height());
         texture = GLTexture(*renderer->active_framebuffer());
 
         shader_program = GLShaderProgram("gl_shaders/passthrough_3U.vert", "gl_shaders/texture.frag");
         uniform_location_image = glGetUniformLocation(shader_program.ID(), "image");
+        uniform_location_transparency = glGetUniformLocation(shader_program.ID(), "transparency");
 
         glGenVertexArrays(1, &quad_vao);
         glBindVertexArray(quad_vao);
@@ -105,36 +126,94 @@ public:
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
+
     }
     void loop();
 };
 void FrameBufferViewerLoop::loop() {
+
+    // Camera control and movement through the "player".
+    //--------------------------------------------------------------------------------
+    // player->update();
+    // g_player->altitude = sin(total_time*0.2);
+    // g_player->azimuth = cos(total_time*0.2);
+
+    // Transform world_to_player = g_player->get_transform();
+    // renderer->camera->set_transform(world_to_player);
+    //--------------------------------------------------------------------------------
+
     static int frame = 0;
     frame++;
+
+    time_since_render += dt;
 
     if (rendering) {
         rendering_state = renderer->render(rendering_state);
         // if (rendering_state.done) rendering = false;
         if (rendering_state.done) {
             rendering_state = RenderingState(0,0,0,0);
-            renderer->clear_active_framebuffer();
+            last_framebuffer.copy_from(*renderer->active_framebuffer());
+            if (last_camera_transform.pretty_much_equal(renderer->camera->world_to_camera)) {
+
+            } else {
+                renderer->clear_active_framebuffer();
+            }
+            num_renders ++;
+            average_render_time = average_render_time * ((num_renders - 1) * (1.0 / num_renders)) + (time_since_render * 1.0 / num_renders);
+            time_since_render = 0;
         }
     }
-    renderer->camera->set_transform(Transform::y_rotation(total_time * (1.0 / 3.0)));
+    // renderer->camera->set_transform(Transform::y_rotation(total_time * (1.0 / 3.0) * exp(-total_time*0.4)));
+    static float theta_y = 0.f;
+    float look_speed = 0.2;
+    if (alt_arrow_key_down(Left)) {
+        theta_y += look_speed * dt;
+    }
+    if (alt_arrow_key_down(Right)) {
+        theta_y -= look_speed * dt;
+    }
+    last_camera_transform = renderer->camera->world_to_camera;
+    renderer->camera->set_transform(Transform::y_rotation(theta_y));
+
+    bool no_fade = false;
+    // if (last_camera_transform.pretty_much_equal(renderer->camera->world_to_camera)) {
+    //     no_fade = true;
+    //     // time_since_render = 0; // this isn't true, but it is what is visually wanted.
+    // }
+
+    shader_program.bind();
+    glUniform1i(uniform_location_image, 0);
+    glBindVertexArray(quad_vao);
+
+    glEnable(GL_BLEND);
+    glBlendEquation(GL_FUNC_ADD);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    texture.destroy();
+    texture = GLTexture(last_framebuffer);
+    texture.bind(0);
+    float lowest_transparency = 1;
+    if (no_fade) {
+        glUniform1f(uniform_location_transparency, 1);
+    } else {
+        //glUniform1f(uniform_location_transparency, average_render_time == 0 ? 0 : lowest_transparency + (1-lowest_transparency) * (1 - time_since_render / average_render_time));
+        glUniform1f(uniform_location_transparency, average_render_time == 0 ? 0 : lowest_transparency + (1-lowest_transparency) * (1 - time_since_render / average_render_time));
+    }
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
     texture.destroy();
     texture = GLTexture(*renderer->active_framebuffer());
-    shader_program.bind();
-    glUniform1i(uniform_location_image, 0);
     texture.bind(0);
-    glBindVertexArray(quad_vao);
+    glUniform1f(uniform_location_transparency, 1);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
 void main_program(int argc, char *argv[], Renderer *renderer)
 {
+    g_player = new Player(0,0,0, 0,0);
+
     // renderer->render();
     // FrameBuffer fb = renderer->downsampled_framebuffer();
+    g_renderer = renderer; //make it globally available...
 
     OpenGLContext context("Progressive view", 512, 512);
     context.open();

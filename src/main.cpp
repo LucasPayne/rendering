@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
     // Camera *camera = make_camera();
     // Default to a camera at the origin facing down the Z-axis.
     Camera *camera = new Camera(Point(0,0,0), Point(0,0,1), 60, 0.566);
-    Renderer *renderer = new Renderer(scene, camera, 512, 1);
+    Renderer *renderer = new Renderer(scene, camera, 256, 1);
     //--------------------------------------------------------------------------------
 
     // This main program is for a simple viewer of a single frame being rendered.
