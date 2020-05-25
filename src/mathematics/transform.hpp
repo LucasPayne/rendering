@@ -35,17 +35,6 @@ public:
         inverse_matrix {_inverse_matrix}
     {}
 
-    // Test if a transform has changed or not. The definition of "pretty much equal" could differ ...
-    bool pretty_much_equal(const Transform &transform) const {
-        //----look up: glm extract columns from matrix.
-        mat4x4 diff = matrix - transform.matrix;
-        float sum_squares = 0.f;
-        for (int i = 0; i < 4; i++) sum_squares += glm::dot(diff[i], diff[i]);
-        const float epsilon = 1e-2;
-        float ep = sqrt(sum_squares);
-        return ep < epsilon;
-    }
-
     inline Point operator()(const Point &p) const {
         return Point(matrix * vec4(p.x, p.y, p.z, 1));
     }

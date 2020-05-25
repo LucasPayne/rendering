@@ -76,9 +76,9 @@ public:
 
     RGB trace_ray(Ray ray);
 
-    RenderingState render(RenderingState state);
-    RenderingState render() {
-        render(RenderingState());
+    RenderingState render(RenderingState state, bool use_blocks = false, int exit_subblock = 0);
+    RenderingState render(bool use_blocks = false, int exit_subblock = 0) {
+        render(RenderingState(), use_blocks, exit_subblock);
     }
 
     FrameBuffer downsampled_framebuffer();
@@ -100,6 +100,12 @@ public:
     }
     inline void set_pixel(int index_i, int index_j, RGB rgb) {
         m_frames[m_active_frame].set(index_i, index_j, RGBA(rgb,1));
+    }
+    inline void set_pixel_block(int index_i, int index_j, int to_index_i, int to_index_j, RGB rgb) {
+        // Safe-guard the block range.
+        if (to_index_i >= m_horizontal_pixels) to_index_i = m_horizontal_pixels - 1;
+        if (to_index_j >= m_vertical_pixels) to_index_j = m_vertical_pixels - 1;
+        m_frames[m_active_frame].set_block(index_i, index_j, to_index_i, to_index_j, RGBA(rgb,1));
     }
     FrameBuffer *active_framebuffer() {
         return &m_frames[m_active_frame];

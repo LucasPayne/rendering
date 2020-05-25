@@ -20,8 +20,16 @@ public:
     inline RGBA operator()(int index_i, int index_j) {
         return data[index_i * m_height + index_j];
     }
-    inline void set(int index_i, int index_j, RGBA rgb) {
-        data[index_i * m_height + index_j] = rgb;
+    inline void set(int index_i, int index_j, RGBA rgba) {
+        data[index_i * m_height + index_j] = rgba;
+    }
+    inline void set_block(int index_i, int index_j, int to_index_i, int to_index_j, RGBA rgba) {
+        int hi_cap = m_height * to_index_i;
+        for (int hi = m_height * index_i; hi <= hi_cap; hi += m_height) {
+            for (int j = index_j; j <= to_index_j; j++) {
+                data[hi + j] = rgba;
+            }
+        }
     }
     int width() const {
         return m_width;

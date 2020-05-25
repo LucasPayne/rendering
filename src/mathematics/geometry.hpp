@@ -93,5 +93,8 @@ public:
 // Print a Ray.
 std::ostream &operator<<(std::ostream &os, const Ray &ray);
 
+// Print a glm::mat4x4.
+std::ostream &operator<<(std::ostream &os, const mat4x4 &m);
+
 
 #endif // GEOMETRY_H

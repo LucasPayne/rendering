@@ -1,5 +1,8 @@
 #include <iostream>
 #include "mathematics/geometry.hpp"
+typedef glm::vec3 vec3;
+typedef glm::vec4 vec4;
+typedef glm::mat4x4 mat4x4;
 
 /*--------------------------------------------------------------------------------
     Vector
@@ -26,4 +29,18 @@ std::ostream &operator<<(std::ostream &os, const Ray &ray)
 {
     os << "Ray(" << ray.o << ", " << ray.d << ")";
     return os;
+}
+
+/*--------------------------------------------------------------------------------
+    glm::mat4x4
+--------------------------------------------------------------------------------*/
+std::ostream &operator<<(std::ostream &os, const mat4x4 &m)
+{
+    os << "mat4x4(";
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            os << "    " << m[i][j] << (j<3?", ":"\n");
+        }
+    }
+    os << ")\n";
 }

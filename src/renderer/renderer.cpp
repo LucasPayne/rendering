@@ -43,7 +43,7 @@ void Renderer::write_to_ppm(std::string const &filename)
     downsampled_fb.write_to_ppm(filename);
 }
 
-RenderingState Renderer::render(RenderingState state) //---get optional argument working.
+RenderingState Renderer::render(RenderingState state, bool use_blocks, int exit_subblock)
 {
     static int counter = 0;
 
@@ -52,7 +52,18 @@ RenderingState Renderer::render(RenderingState state) //---get optional argument
     Ray ray;
 
     int pattern[8] = { 0, 4, 2, 6, 1, 3, 5, 7 };
+    int sizes[8] = { 8, 8, 4, 4, 2, 2, 1, 1 };
     int p_n = 8;
+    int max_p_n;
+    if (exit_subblock == 0) max_p_n = 8;
+    else if (exit_subblock == 1) max_p_n = 6;
+    else if (exit_subblock == 2) max_p_n = 4;
+    else if (exit_subblock == 3) max_p_n = 2;
+    else if (exit_subblock == 4) max_p_n = 0;
+    else {
+        std::cerr << "ERROR: The renderer can be made to stop at a certain resolution of sub-blocks of pixels, but an invalid one was given.\n";
+        exit(EXIT_FAILURE);
+    }
 
     int start_i = state.i;
     int start_j = state.j;
@@ -64,8 +75,8 @@ RenderingState Renderer::render(RenderingState state) //---get optional argument
     bool j_entered = false;
     bool pj_entered = false;
 
-    for (int pi = start_pi; pi < p_n; pi++) {
-        for (int pj = pj_entered ? 0 : start_pj; pj < p_n; pj++) {
+    for (int pi = start_pi; pi < max_p_n; pi++) {
+        for (int pj = pj_entered ? 0 : start_pj; pj < max_p_n; pj++) {
             pj_entered = true;
             for (int i = i_entered ? pattern[pi] : start_i; i < pixels_x(); i += p_n) {
                 i_entered = true;
@@ -80,7 +91,9 @@ RenderingState Renderer::render(RenderingState state) //---get optional argument
                     // std::cout << "Tracing ray (" << x << ", " << y << ")\n";
                     // std::cout << "Lens point: " << p << "\n";
                     ray = Ray(camera->position(), p - camera->position());
-                    set_pixel(i, j, trace_ray(ray));
+                    if (use_blocks) set_pixel_block(i, j, i+sizes[pi]-1, j+sizes[pi]-1, trace_ray(ray));
+                    else set_pixel(i, j, trace_ray(ray));
+                    // set_pixel(i, j, trace_ray(ray));
 
                     if (rendering_should_yield != NULL && rendering_should_yield()) {
                         // Let the loop itself figure out what the next state is.
@@ -120,5 +133,6 @@ RGB Renderer::trace_ray(Ray ray)
     }
     // return RGB(0,1,0);
     // make a nice blue sky
-    return RGB(0.967,0.97,0.995);
+    float yv = 0.15*(ray.o.y);
+    return RGB(0.85+yv,0.85+yv,1);
 }
