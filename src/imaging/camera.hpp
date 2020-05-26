@@ -10,8 +10,6 @@ private:
     float m_near_plane_half_height;
     float m_fov; // The field of view is measured horizontally.
     float m_aspect_ratio;
-
-    Point m_position;
 public:
     Transform camera_to_world, world_to_camera;
 
@@ -23,7 +21,6 @@ public:
         // Initialize private data.
         // Horizontal field of view is passed in degrees.
         m_fov = (M_PI/180.0) * fov;
-        m_position = position;
         m_aspect_ratio = aspect_ratio;
         m_near_plane_distance = 1; // Generated rays are from the camera origin to points on the near plane.
         m_far_plane_distance = 10; // Nothing past the far plane is culled, so this is fine.
@@ -57,8 +54,8 @@ public:
                                      (2*y - 1)*m_near_plane_half_height,
                                      m_near_plane_distance));
     }
-    inline Point position() const {
-        return m_position;
+    Point position() const {
+        return camera_to_world(Point(0,0,0));
     }
     void set_transform(Transform transform) {
         camera_to_world = transform;

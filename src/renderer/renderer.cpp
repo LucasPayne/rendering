@@ -4,6 +4,7 @@
 #include "scene.hpp"
 #include "renderer.hpp"
 #include <stdio.h>
+#include <iostream>
 
 void Renderer::downsample_to_framebuffer(FrameBuffer *downsampled_fb)
 {
@@ -82,7 +83,6 @@ RenderingState Renderer::render(RenderingState state, bool use_blocks, int exit_
                 i_entered = true;
                 for (int j = j_entered ? pattern[pj] : start_j; j < pixels_y(); j += p_n) {
                     j_entered = true;
-
                     if (yielding) return RenderingState(pi,pj,i,j);
 
                     x = pixels_x_inv() * i;

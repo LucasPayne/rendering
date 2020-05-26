@@ -53,7 +53,7 @@ public:
     }
     inline Point position() const {
         // This assumes that the matrix is affine.
-        return Point(matrix[3][0], matrix[3][1], matrix[3][2]);
+        return (*this)(Point(0,0,0));
     };
 
     inline Vector transform_normal(const Vector &n) const {

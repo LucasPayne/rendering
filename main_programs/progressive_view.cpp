@@ -25,8 +25,9 @@ bool pretty_much_equal(const Transform &t1, const Transform &t2)
     mat4x4 diff = t1.matrix - t2.matrix;
     float sum_squares = 0.f;
     for (int i = 0; i < 4; i++) sum_squares += glm::dot(diff[i], diff[i]);
-    const float epsilon = 1e-2 * dt; // makes sense to scale this margin linearly due to time passed each frame.
+    const float epsilon = 1e-1 * dt; // makes sense to scale this margin due to time passed each frame.
     float ep = sqrt(sum_squares);
+    if (ep < epsilon) std::cout << "Not equal\n";
     return ep < epsilon;
 }
 
@@ -148,20 +149,12 @@ void FrameBufferViewerLoop::loop() {
 
     // Camera control and movement through the "player".
     //--------------------------------------------------------------------------------
-    // player->update();
-    // g_player->altitude = sin(total_time*0.2);
-    // g_player->azimuth = cos(total_time*0.2);
+    last_camera_transform = renderer->camera->camera_to_world;
+    g_player->update();
 
-    // Transform world_to_player = g_player->get_transform();
-    // renderer->camera->set_transform(world_to_player);
-    //--------------------------------------------------------------------------------
-
-    static int frame = 0;
-    frame++;
-
-    time_since_render += dt;
-
-    // renderer->camera->set_transform(Transform::y_rotation(total_time * (1.0 / 3.0) * exp(-total_time*0.4)));
+#if 1
+    renderer->camera->set_transform(g_player->get_transform());
+#else
     static float theta_y = 0.f;
     float look_speed = 0.7;
     if (alt_arrow_key_down(Left)) {
@@ -170,15 +163,17 @@ void FrameBufferViewerLoop::loop() {
     if (alt_arrow_key_down(Right)) {
         theta_y -= look_speed * dt;
     }
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            last_camera_transform.matrix[i][j] = renderer->camera->world_to_camera.matrix[i][j];
-        }
-    }
+    // renderer->camera->set_transform(Transform::y_rotation(theta_y) * Transform::translate(Vector(0,0,-total_time)));
     renderer->camera->set_transform(Transform::y_rotation(theta_y));
+#endif
+    std::cout << renderer->camera->world_to_camera.matrix;
+    //--------------------------------------------------------------------------------
+
+    time_since_render += dt;
+
 
     // currently this value is not used.
-    if (!pretty_much_equal(last_camera_transform, renderer->camera->world_to_camera)) moved_since_last_render = true;
+    if (!pretty_much_equal(last_camera_transform, renderer->camera->camera_to_world)) moved_since_last_render = true;
 
     if (!rendering) {
         // well, it is still actually rendering ... but it is assumed the camera is almost still, so
@@ -255,7 +250,8 @@ void FrameBufferViewerLoop::loop() {
 
 void main_program(int argc, char *argv[], Renderer *renderer)
 {
-    g_player = new Player(0,0,0, 0,0);
+    g_player = new Player(0,0,0, 0,0, 1);
+    g_player->look_with_mouse = false;
 
     // renderer->render();
     // FrameBuffer fb = renderer->downsampled_framebuffer();

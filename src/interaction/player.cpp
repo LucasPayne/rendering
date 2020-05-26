@@ -57,8 +57,8 @@ void Player::update()
     float move_x = 0, move_z = 0;
     if (alt_arrow_key_down(Right)) move_x += speed * dt;
     if (alt_arrow_key_down(Left)) move_x -= speed * dt;
-    if (alt_arrow_key_down(Up)) move_z -= speed * dt;
-    if (alt_arrow_key_down(Down)) move_z += speed * dt;
+    if (alt_arrow_key_down(Up)) move_z += speed * dt;
+    if (alt_arrow_key_down(Down)) move_z -= speed * dt;
     Vector movement = right*move_x + forward*move_z;
     position = position + movement;
 
@@ -73,22 +73,22 @@ void Player::update()
     }
 
     if (!look_with_mouse) {
-        float look_speed = 4;
-        if (arrow_key_down(Right)) azimuth += look_speed * dt;
-        if (arrow_key_down(Left)) azimuth -= look_speed * dt;
+        float look_speed = 0.8;
+        if (arrow_key_down(Right)) azimuth -= look_speed * dt;
+        if (arrow_key_down(Left)) azimuth += look_speed * dt;
         if (arrow_key_down(Down)) {
-            altitude += look_speed * dt;
+            altitude -= look_speed * dt;
             lock_altitude();
         }
         if (arrow_key_down(Up)) {
-            altitude -= look_speed * dt;
+            altitude += look_speed * dt;
             lock_altitude();
         }
     }
 }
 
 
-Player::Player(float x, float y, float z, float _azimuth, float _altitude)
+Player::Player(float x, float y, float z, float _azimuth, float _altitude, float _speed)
 {
     position = Point(x, y, z);
     azimuth = _azimuth;
@@ -98,7 +98,7 @@ Player::Player(float x, float y, float z, float _azimuth, float _altitude)
     flying = true;
     look_with_mouse = true;
                                      
-    speed = 150;
+    speed = _speed;
     min_speed = speed * 0.1;
     max_speed = speed * 10;
     scrollable_speed = true;

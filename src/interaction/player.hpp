@@ -29,7 +29,7 @@ public:
     float min_speed;
     float max_speed;
 
-    Player(float x, float y, float z, float azimuth, float altitude);
+    Player(float x, float y, float z, float azimuth, float altitude, float speed);
 
     void update();
     void lock_altitude();
@@ -44,14 +44,17 @@ public:
         Vector straight_up = glm::cross(straight_forward, right);
         Vector forward = cal*straight_forward + sal*straight_up;
         Vector up = glm::cross(forward, right);
-        
 
-        mat4x4 rot(right.x,right.y,right.z,0,
-                   up.x,up.y,up.z,0,
-                   forward.x,forward.y,forward.z,0,
-                   0,0,0,1);
-        Transform rotation_transform(rot, glm::transpose(rot));
-        return Transform::translate(position) * rotation_transform;
+        // mat4x4 m(right.x,right.y,right.z,0,
+        //          up.x,up.y,up.z,0,
+        //          forward.x,forward.y,forward.z,0,
+        //          0,0,0,1);
+        // return Transform::translate(position) * Transform(m, glm::transpose(m));
+        mat4x4 m(right.x,right.y,right.z,0,
+                 up.x,up.y,up.z,0,
+                 forward.x,forward.y,forward.z,0,
+                 position.x,position.y,position.z,1);
+        return Transform(m);
     }
 private:
 };

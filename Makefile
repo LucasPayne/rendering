@@ -14,7 +14,7 @@ build/rays.o: src/main.cpp build/libraries/glad.o build/core.o build/gl_core.o
 	ld -relocatable -o $@ build/main.o build/libraries/glad.o build/core.o build/gl_core.o
 
 clean:
-	rm build/**/*.o
+	find build/ -type f -name '*.o' -delete
 
 build/libraries/glad.o: libraries/glad/glad.c
 	$(CC) -c $< -o $@ $(CFLAGS)
