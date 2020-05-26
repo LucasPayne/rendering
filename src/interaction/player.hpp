@@ -7,7 +7,7 @@ enum FlyingModes {
     PlayerFlyWalk, // This allows toggling.
     PlayerWalk,
 };
-class Player {
+class Player : public InputListener {
 public:
     Point position;
 
@@ -56,6 +56,10 @@ public:
                  position.x,position.y,position.z,1);
         return Transform(m);
     }
+    // Input event callback functions, implementation of virtual methods in InputListener base class.
+    void key_callback(int key, int action);
+    void cursor_position_callback(double x, double y);
+    void mouse_button_callback(int button, int action);
 private:
 };
 

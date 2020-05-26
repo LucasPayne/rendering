@@ -27,7 +27,6 @@ bool pretty_much_equal(const Transform &t1, const Transform &t2)
     for (int i = 0; i < 4; i++) sum_squares += glm::dot(diff[i], diff[i]);
     const float epsilon = 1e-1 * dt; // makes sense to scale this margin due to time passed each frame.
     float ep = sqrt(sum_squares);
-    if (ep < epsilon) std::cout << "Not equal\n";
     return ep < epsilon;
 }
 
@@ -77,8 +76,8 @@ private:
     RenderingState rendering_state;
     float time_since_render;
     int num_renders;
+    int num_still_renders;
     float average_render_time;
-    bool moved_since_last_render;
     
     Transform last_camera_transform;
 
@@ -93,7 +92,8 @@ private:
 
     GLShaderProgram shader_program;
 
-    FrameBuffer last_framebuffer;
+    FrameBuffer last_downsampled_framebuffer;
+    FrameBuffer downsampled_framebuffer;
 public:
     FrameBufferViewerLoop(Renderer *_renderer)
     {
@@ -103,8 +103,10 @@ public:
         average_render_time = 0;
         num_renders = 0;
         renderer = _renderer;
-        moved_since_last_render = false;
-        last_framebuffer = FrameBuffer(renderer->active_framebuffer()->width(), renderer->active_framebuffer()->height());
+        // Initialize the two framebuffers.
+        //--- to save a copy each frame, these buffers could be swapped each frame.
+        downsampled_framebuffer = FrameBuffer(renderer->downsampled_pixels_x(), renderer->downsampled_pixels_y());
+        last_downsampled_framebuffer = FrameBuffer(renderer->downsampled_pixels_x(), renderer->downsampled_pixels_y());
         texture = GLTexture(*renderer->active_framebuffer());
 
         shader_program = GLShaderProgram("gl_shaders/passthrough_3U.vert", "gl_shaders/texture.frag");
@@ -146,69 +148,73 @@ public:
     void loop();
 };
 void FrameBufferViewerLoop::loop() {
+    // note:
+    //    As long as the image is being rendered, the logic of this loop is a free-for-all
+    //    attempt to make the image being synthesized kind of look good while still or moving.
 
+    time_since_render += dt;
     // Camera control and movement through the "player".
     //--------------------------------------------------------------------------------
     last_camera_transform = renderer->camera->camera_to_world;
+        
     g_player->update();
-
-#if 1
     renderer->camera->set_transform(g_player->get_transform());
-#else
-    static float theta_y = 0.f;
-    float look_speed = 0.7;
-    if (alt_arrow_key_down(Left)) {
-        theta_y += look_speed * dt;
-    }
-    if (alt_arrow_key_down(Right)) {
-        theta_y -= look_speed * dt;
-    }
-    // renderer->camera->set_transform(Transform::y_rotation(theta_y) * Transform::translate(Vector(0,0,-total_time)));
-    renderer->camera->set_transform(Transform::y_rotation(theta_y));
-#endif
-    std::cout << renderer->camera->world_to_camera.matrix;
     //--------------------------------------------------------------------------------
+    bool camera_moved_this_frame = !pretty_much_equal(last_camera_transform, renderer->camera->camera_to_world);
 
-    time_since_render += dt;
-
-
-    // currently this value is not used.
-    if (!pretty_much_equal(last_camera_transform, renderer->camera->camera_to_world)) moved_since_last_render = true;
-
+    if (rendering) {
+        if (pretty_much_equal(last_camera_transform, renderer->camera->camera_to_world)) {
+    	    // Camera is now still, change logic.
+    	    num_still_renders = 0;
+    	    rendering = false;
+        }
+    }
     if (!rendering) {
-        // well, it is still actually rendering ... but it is assumed the camera is almost still, so
-        // finish the image off without using blocks, in case the camera just moves slightly.
-        rendering_state = renderer->render(rendering_state, false);
-        // Start rendering again if the camera moves.
-        if (!pretty_much_equal(last_camera_transform, renderer->camera->world_to_camera)) {
+        // When "not rendering", the camera is assumed to be still enough that the renderering just fills in smaller details.
+        if (num_still_renders == 0) {
+            // Use blocks if finishing the rendering for the first time.
+            rendering_state = renderer->render(rendering_state, true);
+        } else {
+            // Since slight shifts to the camera could have been made, keep filling in small details.
+            rendering_state = renderer->render(rendering_state, false);
+        }
+        if (rendering_state.done) num_still_renders ++;
+
+        // Start movement-rendering again if the camera moves.
+        if (!pretty_much_equal(last_camera_transform, renderer->camera->camera_to_world)) {
             rendering = true;
         }
     }
     if (rendering) {
-        rendering_state = renderer->render(rendering_state, true, 2);
+        // Render with blocks, at a courser level while moving.
+        rendering_state = renderer->render(rendering_state, true, 3);
         if (rendering_state.done) {
+            // If the render cycle is complete, either keep rendering while moving,
+            // or switch to the other rendering mode, where the camera is assumed still.
             rendering_state = RenderingState(0,0,0,0);
-            last_framebuffer.copy_from(*renderer->active_framebuffer());
 
-            if (pretty_much_equal(last_camera_transform, renderer->camera->world_to_camera)) {
+            if (pretty_much_equal(last_camera_transform, renderer->camera->camera_to_world)) {
+                // Camera is now still, change logic.
+                num_still_renders = 0;
                 rendering = false;
             } else {
-                // If the camera is not (almost) still, clear the render, which is saved in last_framebuffer,
+                // If the camera is not (almost) still, clear the render, which is saved in last_downsampled_framebuffer,
                 // so movements can blend.
+                last_downsampled_framebuffer.copy_from(downsampled_framebuffer);
                 renderer->clear_active_framebuffer();
             }
+            // Some statistics that might be wanted when editing this camera behaviour.
+            // Accumulate the average render time.
+            //     average = sum(render_times) / num_renders
+            // To accumulate the average without saving the previous render times, rearrange in terms of the above,
+            //     (sum(render_times) + new_render_time) / (num_renders + 1) =
+            //          new_render_time / (num_renders + 1) + (num_renders/(num_renders + 1))*average.
+            average_render_time = time_since_render/(num_renders + 1) + (num_renders * (1.0 / num_renders))*average_render_time;
 	    num_renders ++;
-	    average_render_time = average_render_time * ((num_renders - 1) * (1.0 / num_renders)) + (time_since_render * 1.0 / num_renders);
 	    time_since_render = 0;
-            moved_since_last_render = false;
         }
     }
-
-    bool no_fade = false;
-    // if (last_camera_transform.pretty_much_equal(renderer->camera->world_to_camera)) {
-    //     no_fade = true;
-    //     time_since_render = 0; // this isn't true, but it is what is visually wanted.
-    // }
+    renderer->downsample_to_framebuffer(&downsampled_framebuffer);
 
     shader_program.bind();
     glUniform1i(uniform_location_image, 0);
@@ -219,39 +225,20 @@ void FrameBufferViewerLoop::loop() {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     texture.destroy();
-    texture = GLTexture(last_framebuffer);
+    texture = GLTexture(last_downsampled_framebuffer);
     texture.bind(0);
-    // float lowest_transparency = 1;
-    // if (no_fade) {
-    //     glUniform1f(uniform_location_transparency, 1);
-    // } else {
-    //     int tlevels = 10;
-    //     glUniform1f(uniform_location_transparency, ((int) (tlevels*(1 - time_since_render / average_render_time))) / (1.0 * tlevels));
-    //     // glUniform1f(uniform_location_transparency, average_render_time == 0 ? 0 : lowest_transparency + (1-lowest_transparency) * (1 - time_since_render / average_render_time));
-    // }
-    float fade_speed = 1;
-    //glUniform1f(uniform_location_transparency, 1 - fade_speed * time_since_render / average_render_time);
     glUniform1f(uniform_location_transparency, 1);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
     texture.destroy();
-    texture = GLTexture(*renderer->active_framebuffer());
+    texture = GLTexture(downsampled_framebuffer);
     texture.bind(0);
-    // glUniform1f(uniform_location_transparency, 1);
-    int tlevels = 3;
-    float transparency = floor(tlevels * fade_speed * time_since_render / average_render_time) * (1.0 / tlevels);
-    //float transparency = fade_speed * time_since_render / average_render_time;
-    // glUniform1f(uniform_location_transparency, transparency);
     glUniform1f(uniform_location_transparency, 1);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
-
 }
 
 void main_program(int argc, char *argv[], Renderer *renderer)
 {
-    g_player = new Player(0,0,0, 0,0, 1);
-    g_player->look_with_mouse = false;
 
     // renderer->render();
     // FrameBuffer fb = renderer->downsampled_framebuffer();
@@ -260,6 +247,11 @@ void main_program(int argc, char *argv[], Renderer *renderer)
     OpenGLContext context("Progressive view", 512, 512);
     context.open();
     renderer->set_yield_test(frame_time_has_passed);
+
+    g_player = new Player(0,0,0, 0,0, 3);
+    g_player->look_with_mouse = false;
+    context.add_input_listener(g_player);
+
     context.add_looper(new FrameBufferViewerLoop(renderer));
     context.add_reshape_callback(reshape);
     context.add_key_callback(key);

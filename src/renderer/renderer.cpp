@@ -136,3 +136,13 @@ RGB Renderer::trace_ray(Ray ray)
     float yv = 0.15*(ray.o.y);
     return RGB(0.85+yv,0.85+yv,1);
 }
+
+void Renderer::print_properties() const
+{
+    std::cout << "renderer properties:" << "\n";
+    std::cout << "    horizontal_pixels: " << m_horizontal_pixels << "\n";
+    std::cout << "    vertical_pixels: " << m_vertical_pixels << "\n";
+    std::cout << "    super_sample_width: " << m_supersample_width << "\n";
+    std::cout << "    downsampled_horizontal_pixels: " << m_downsampled_horizontal_pixels << "\n";
+    std::cout << "    downsampled_vertical_pixels: " << m_downsampled_vertical_pixels << "\n";
+}

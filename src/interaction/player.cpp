@@ -1,5 +1,5 @@
 // player from Engine
-#include "interaction/player.hpp"
+#include "interaction.hpp"
 #include "gl.hpp"
 
 void Player::lock_altitude()
@@ -8,6 +8,31 @@ void Player::lock_altitude()
     float altitude_down_cap = -(M_PI / 2 - 0.3);
     if (altitude > altitude_up_cap) altitude = altitude_up_cap;
     if (altitude < altitude_down_cap) altitude = altitude_down_cap;
+}
+void Player::key_callback(int key, int action)
+{
+    if (action == GLFW_PRESS) {
+        if (key == GLFW_KEY_E) {
+            look_with_mouse = !look_with_mouse;
+        }
+        if (key == GLFW_KEY_X) {
+            scrollable_speed = !scrollable_speed;
+        }
+    }
+}
+void Player::cursor_position_callback(double x, double y)
+{
+    std::cout << "ok!\n";
+    float mouse_sensitivity = 2;
+    if (look_with_mouse) {
+        azimuth += x * mouse_sensitivity;
+        altitude -= y * mouse_sensitivity;
+        lock_altitude();
+    }
+}
+void Player::mouse_button_callback(int button, int action)
+{
+
 }
 // void Player::mouse_move_listener(float x, float y, float dx, float dy)
 // {

@@ -12,11 +12,12 @@
 extern float total_time;
 extern float dt;
 
+
+
 typedef void (*KeyCallback)(int key, int action);
 typedef void (*CursorPositionCallback)(double x, double y);
 typedef void (*MouseButtonCallback)(int button, int action);
 typedef void (*ReshapeCallback)(int width, int height);
-
 
 // A Looper can encpasulate its own data, so is a sort of parameterized function.
 // The OpenGLContext holds a list of these.
@@ -36,10 +37,13 @@ private:
     static void glfw_cursor_position_callback(GLFWwindow *window, double x, double y);
     static void glfw_mouse_button_callback(GLFWwindow *window, int button, int action, int mods);
 
+    // These callbacks are just function pointers, so cannot be associated to objects with data.
     std::vector<KeyCallback> m_key_callbacks;
     std::vector<CursorPositionCallback> m_cursor_position_callbacks;
     std::vector<MouseButtonCallback> m_mouse_button_callbacks;
     std::vector<ReshapeCallback> m_reshape_callbacks;
+    // A class derived from InputListener implements callback functions, so can have data, etc.
+    std::vector<InputListener *> m_input_listeners;
 
     std::vector<Looper *> m_loopers;
 
@@ -69,6 +73,10 @@ public:
     void enter_loop();
 
 
+    InputListener *add_input_listener(InputListener *input_listener) {
+        m_input_listeners.push_back(input_listener);
+        return input_listener;
+    }
     KeyCallback add_key_callback(KeyCallback callback) {
         m_key_callbacks.push_back(callback);
         return callback;

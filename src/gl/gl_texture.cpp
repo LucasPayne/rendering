@@ -3,7 +3,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-GLTexture::GLTexture(FrameBuffer &fb)
+GLTexture::GLTexture(FrameBuffer &fb, bool linear)
 {
     int w = fb.width();
     int h = fb.height();
@@ -31,7 +31,7 @@ GLTexture::GLTexture(FrameBuffer &fb)
                     ubyte_data);
     delete ubyte_data;
     // Set the texture defaults.
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, linear ? GL_LINEAR : GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, linear ? GL_LINEAR : GL_NEAREST);
     glBindTexture(GL_TEXTURE_2D, 0);
 }

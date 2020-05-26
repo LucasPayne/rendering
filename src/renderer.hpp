@@ -89,8 +89,14 @@ public:
     inline const int pixels_x() const {
         return m_horizontal_pixels;
     }
+    inline const int downsampled_pixels_x() const {
+        return m_downsampled_horizontal_pixels;
+    }
     inline const int pixels_y() const {
         return m_vertical_pixels;
+    }
+    inline const int downsampled_pixels_y() const {
+        return m_downsampled_vertical_pixels;
     }
     inline const float pixels_x_inv() const {
         return m_horizontal_pixels_inv;
@@ -113,6 +119,7 @@ public:
     void clear_active_framebuffer(RGBA color = RGBA(0,0,0,0)) {
         m_frames[m_active_frame].clear(color);
     }
+    void print_properties() const;
 };
 
 #endif // RENDERER_H

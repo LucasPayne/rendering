@@ -11,7 +11,7 @@ private:
     int m_bound_to_texture_unit;
 public:
     GLTexture() {}
-    GLTexture(FrameBuffer &fb);
+    GLTexture(FrameBuffer &fb, bool linear = false);
     GLuint ID() const {
         return m_gl_texture_id;
     }

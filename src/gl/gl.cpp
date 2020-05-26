@@ -106,19 +106,28 @@ void OpenGLContext::glfw_key_callback(GLFWwindow *window, int key,
                        int mods)
 {
     key_callback_arrows_down(window, key, scancode, action, mods);
+    for (InputListener * il : g_opengl_context->m_input_listeners) {
+        il->key_callback(key, action);
+    }
     for (const KeyCallback &cb : g_opengl_context->m_key_callbacks) {
         cb(key, action);
     }
 }
 void OpenGLContext::glfw_cursor_position_callback(GLFWwindow *window, double x, double y)
 {
+    //--- Should convert to more meaningful coordinates.
+    for (InputListener * il : g_opengl_context->m_input_listeners) {
+        il->cursor_position_callback(x, y);
+    }
     for (const CursorPositionCallback &cb : g_opengl_context->m_cursor_position_callbacks) {
-        //--- Should convert to more meaningful coordinates.
         cb(x, y);
     }
 }
 void OpenGLContext::glfw_mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
 {
+    for (InputListener * il : g_opengl_context->m_input_listeners) {
+        il->mouse_button_callback(button, action);
+    }
     for (const MouseButtonCallback &cb : g_opengl_context->m_mouse_button_callbacks) {
         cb(button, action);
     }
