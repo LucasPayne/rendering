@@ -12,8 +12,6 @@
 extern float total_time;
 extern float dt;
 
-
-
 typedef void (*KeyCallback)(int key, int action);
 typedef void (*CursorPositionCallback)(double x, double y);
 typedef void (*MouseButtonCallback)(int button, int action);
@@ -47,8 +45,10 @@ private:
 
     std::vector<Looper *> m_loopers;
 
-    int m_resolution_x;
-    int m_resolution_y;
+    int m_initial_resolution_x;
+    int m_initial_resolution_y;
+    int m_window_width;
+    int m_window_height;
 
     // GLFW state.
     GLFWwindow *m_glfw_window;
@@ -61,8 +61,10 @@ public:
     OpenGLContext(std::string const &window_name, int res_x = 512, int res_y = 512) :
         m_glfw_window_name(window_name)
     {
-        m_resolution_x = res_x;
-        m_resolution_y = res_y;
+        m_initial_resolution_x = res_x;
+        m_initial_resolution_y = res_y;
+        m_window_width = res_x;
+        m_window_height = res_x;
         m_time = 0;
         m_dt = 0;
         m_last_time = 0;
@@ -71,7 +73,6 @@ public:
     void open();
     void close();
     void enter_loop();
-
 
     InputListener *add_input_listener(InputListener *input_listener) {
         m_input_listeners.push_back(input_listener);
@@ -98,7 +99,8 @@ public:
         m_loopers.push_back(looper);
         return looper;
     }
-
+    inline int window_width() const { return m_window_width; }
+    inline int window_height() const { return m_window_height; }
 };
 
 // There can only be one.

@@ -18,15 +18,32 @@ void Player::key_callback(int key, int action)
         if (key == GLFW_KEY_X) {
             scrollable_speed = !scrollable_speed;
         }
+        if (key == GLFW_KEY_R) {
+            position = Point(0,0,0);
+            azimuth = 0;
+            altitude = 0;
+        }
     }
 }
 void Player::cursor_position_callback(double x, double y)
 {
-    std::cout << "ok!\n";
+    // Probably only one player, whatever ...
+    static float prev_x;
+    static float prev_y;
+    static bool prev_set = false;
+    if (!prev_set) {
+        prev_x = 0; prev_y = 0;
+        prev_set = true;
+    }
+    float dx = x - prev_x;
+    float dy = y - prev_y;
+    prev_x = x;
+    prev_y = y;
+
     float mouse_sensitivity = 2;
     if (look_with_mouse) {
-        azimuth += x * mouse_sensitivity;
-        altitude -= y * mouse_sensitivity;
+        azimuth -= dx * mouse_sensitivity;
+        altitude += dy * mouse_sensitivity;
         lock_altitude();
     }
 }

@@ -1,6 +1,7 @@
 #include "core.hpp" //--- this dependence might be avoided somehow.
 #include "gl.hpp"
 #include <iostream>
+#include <stdio.h>
 
 float total_time;
 float dt;
@@ -22,7 +23,7 @@ void OpenGLContext::open()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    m_glfw_window = glfwCreateWindow(m_resolution_x, m_resolution_y, m_glfw_window_name.c_str(), NULL, NULL);
+    m_glfw_window = glfwCreateWindow(m_initial_resolution_x, m_initial_resolution_y, m_glfw_window_name.c_str(), NULL, NULL);
     if (m_glfw_window == NULL) {
         std::cerr << "GLFW error: Failed to create a window properly.\n";
         glfwTerminate();
@@ -96,6 +97,8 @@ void OpenGLContext::enter_loop()
 
 void OpenGLContext::glfw_reshape(GLFWwindow *window, int width, int height)
 {
+    g_opengl_context->m_window_width = width;
+    g_opengl_context->m_window_height = height;
     for (const ReshapeCallback &cb : g_opengl_context->m_reshape_callbacks) {
         cb(width, height);
     }
@@ -113,9 +116,15 @@ void OpenGLContext::glfw_key_callback(GLFWwindow *window, int key,
         cb(key, action);
     }
 }
-void OpenGLContext::glfw_cursor_position_callback(GLFWwindow *window, double x, double y)
+void OpenGLContext::glfw_cursor_position_callback(GLFWwindow *window, double window_x, double window_y)
 {
-    //--- Should convert to more meaningful coordinates.
+    // Convert to more meaningful coordinates, (0,0) bottom left corner of viewport, (1,1) top right.
+    GLint viewport[4]; //x,y,width,height
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    float x = (window_x - viewport[0]) / (1.0 * viewport[2]);
+    float y = 1 - (window_y - viewport[1]) / (1.0 * viewport[3]);
+    // printf("(%.2f,%.2f)\n", x,y);
+
     for (InputListener * il : g_opengl_context->m_input_listeners) {
         il->cursor_position_callback(x, y);
     }
