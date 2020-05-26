@@ -70,6 +70,8 @@ public:
     static Transform y_rotation(float theta);
     static Transform z_rotation(float theta);
     static Transform extrinsic_euler_angles_XYZ(float theta_x, float theta_y, float theta_z);
+
+    static Transform scale(float amount);
 };
 
 Transform operator*(const Transform &A, const Transform &B);

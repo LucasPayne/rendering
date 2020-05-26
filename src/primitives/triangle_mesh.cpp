@@ -11,6 +11,7 @@ bool TriangleMesh::intersect(Ray &world_ray, LocalGeometry *geom)
     Vector &d = object_ray.d;
 
     int triangle_index = -1;
+    float max_t = INFINITY;
     Vector triangle_n;
     for (int i = 0; i < model.num_triangles; i++) {
         Point &a = model.vertices[model.triangles[3*i + 0]];
@@ -26,7 +27,7 @@ bool TriangleMesh::intersect(Ray &world_ray, LocalGeometry *geom)
             denom = epsilon;
         }
         float t = glm::dot(a - o, n) / denom;
-        if (t < world_ray.min_t || t > world_ray.max_t) continue;
+        if (t < world_ray.min_t || t > max_t) continue;
 
         Point p = o + d * t;
         if (glm::dot(p - a, glm::cross(b - a, glm::cross(c - a, b - a))) < 0)
@@ -35,17 +36,19 @@ bool TriangleMesh::intersect(Ray &world_ray, LocalGeometry *geom)
             continue;
         if (glm::dot(p - c, glm::cross(a - c, glm::cross(b - c, a - c))) < 0)
             continue;
-        
 
         triangle_index = i;
         triangle_n = n;
-        world_ray.max_t = t;
+        max_t = t;
     }
     if (triangle_index < 0) return false;
+    world_ray.max_t = max_t;
 
     geom->primitive = this;
-    geom->p = world_ray.o + world_ray.d * world_ray.max_t;
-    geom->n = triangle_n;
+    geom->p = object_to_world(o + d * max_t);
+    geom->n = glm::normalize(object_to_world.transform_normal(triangle_n));
     
     return true;
 }
+
+

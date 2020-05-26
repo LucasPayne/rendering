@@ -97,3 +97,17 @@ Transform Transform::extrinsic_euler_angles_XYZ(float theta_x, float theta_y, fl
 {
     return (Transform::z_rotation(theta_z) * Transform::y_rotation(theta_y)) * Transform::x_rotation(theta_x);
 }
+
+Transform Transform::scale(float amount)
+{
+    float inv_amount = 1.0 / amount;
+    mat4x4 m(amount,0,0,0,
+             0,amount,0,0,
+             0,0,amount,0,
+             0,0,0,1);
+    mat4x4 minv(inv_amount,0,0,0,
+             0,inv_amount,0,0,
+             0,0,inv_amount,0,
+             0,0,0,1);
+    return Transform(m, minv);
+}

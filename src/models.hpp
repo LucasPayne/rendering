@@ -25,15 +25,16 @@ struct Model {
         num_triangles = 0;
         has_normals = false;
     }
-    Model(std::vector<Point> &_vertices, std::vector<uint16_t> &_triangles) {
+    Model(std::vector<Point> &_vertices, int _num_vertices, std::vector<uint16_t> &_triangles, int _num_triangles) {
         vertices = _vertices;
-        num_vertices = _vertices.size();
+        num_vertices = _num_vertices;
         triangles = _triangles;
-        num_triangles = _triangles.size() / 3;
+        num_triangles = _num_triangles;
         has_normals = false;
     }
+    void print_properties() const;
 };
 
-Model load_OFF_model(std::string const &filename);
+Model load_OFF_model(std::string const &filename, float scale = 1.f, Point center = Point(0,0,0), bool invert_winding_order = false);
 
 #endif // MODELS_H
