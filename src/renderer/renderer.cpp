@@ -44,6 +44,57 @@ void Renderer::write_to_ppm(std::string const &filename)
     downsampled_fb.write_to_ppm(filename);
 }
 
+// This render function is intended for just rendering an image in one pass.
+// It does have a single callback function, but this does not cause an exit from the loop, but
+// rather can be used to e.g. show a time estimate.
+void Renderer::render_direct()
+{
+    int width = pixels_x();
+    int height = pixels_y();
+
+    Vector camera_right_extent = camera->imaging_plane_width() * camera->camera_to_world(Vector(1,0,0));
+    Vector camera_down_extent = camera->imaging_plane_height() * camera->camera_to_world(Vector(0,-1,0));
+    Point origin = camera->position();
+    Vector shifted_camera_top_left = camera->lens_point(0,1) - origin;
+
+    // float imaging_plane_ray_dx = camera->imaging_plane_width() / (width == 1 ? 1 : width - 1);
+    // float imaging_plane_ray_dy = camera->imaging_plane_height() / (height == 1 ? 1 : height - 1);
+    // Vector right_extent = camera->imaging_plane_width() * camera_right;
+    // Vector down_extent = -camera->imaging_plane_height() * camera_up;
+    // Vector ray_dx = camera_right * imaging_plane_ray_dx;
+    // Vector ray_dy = -camera_up * imaging_plane_ray_dy;
+    // Point p = camera->lens_point(0,1);
+    // Ray ray(camera->position(), p - camera->position());
+
+    LocalGeometry geom;
+    for (int i = 0; i < width; i++) {
+        for (int j = 0; j < height; j++) {
+	    float x = pixels_x_inv() * i;
+	    float y = pixels_y_inv() * j;
+            Ray ray(origin, shifted_camera_top_left + x*camera_right_extent + y*camera_down_extent);
+            // std::cout << ray << "\n"; getchar();
+            if (intersect_primitive_vector(ray, scene->primitives, &geom)) {
+                Vector n = glm::normalize(geom.n);
+                RGB color = RGB(0,0,0);
+                for (Light *light : scene->lights) {
+                    Vector light_vector;
+	            VisibilityTester visibility_tester;
+                    RGB light_radiance = light->radiance(geom.p, &light_vector, &visibility_tester);
+                    if (visibility_tester.unoccluded(scene)) {
+                        float cos_theta = glm::dot(light_vector, n);
+                        color += light_radiance * (cos_theta < 0 ? 0 : cos_theta);
+                    }
+                }
+                // Modulate with the diffuse color of the surface.
+                color *= RGB(1,1,1);
+                set_pixel(i, j, color);
+            } else {
+                set_pixel(i, j, RGB(0.97,0.7,0.96));
+            }
+        }
+    }
+}
+
 RenderingState Renderer::render(RenderingState state, bool use_blocks, int exit_subblock)
 {
     static int counter = 0;

@@ -56,7 +56,22 @@ public:
     inline Point operator+(const Vector &v) const {
         return Point(x + v.x, y + v.y, z + v.z);
     }
+    inline Point &operator+=(const Vector &v) {
+        x += v.x;
+        y += v.y;
+        z += v.z;
+        return (*this);
+    }
+    inline Point &operator-=(const Vector &v) {
+        x -= v.x;
+        y -= v.y;
+        z -= v.z;
+        return (*this);
+    }
 };
+
+
+
 // Print a Point.
 std::ostream &operator<<(std::ostream &os, const Point &point);
 

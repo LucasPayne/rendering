@@ -37,6 +37,14 @@ public:
     inline const float aspect_ratio() const {
         return m_aspect_ratio;
     }
+    
+    inline float imaging_plane_width() const {
+        return 2*m_near_plane_half_width;
+    }
+    inline float imaging_plane_height() const {
+        return 2*m_near_plane_half_height;
+    }
+
     inline Point lens_point(float x, float y) const {
         // Return a position on the near quad ("lens") in world space, given x,y in
         // coordinates
@@ -54,6 +62,7 @@ public:
                                      (2*y - 1)*m_near_plane_half_height,
                                      m_near_plane_distance));
     }
+    
     Point position() const {
         return camera_to_world(Point(0,0,0));
     }
