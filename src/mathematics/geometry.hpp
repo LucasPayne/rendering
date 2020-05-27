@@ -2,11 +2,15 @@
 #define GEOMETRY_H
 #include <iostream>
 #include <glm/glm.hpp>
-#include <cmath>
+#include <math.h>
+
 // Some geometric classes wrap a glm implementation.
 typedef glm::vec3 vec3;
 typedef glm::vec4 vec4;
 typedef glm::mat4x4 mat4x4;
+
+// Print a glm::mat4x4.
+std::ostream &operator<<(std::ostream &os, const mat4x4 &m);
 
 /*================================================================================
     A Vector is a directional vector.
@@ -21,8 +25,7 @@ std::ostream &operator<<(std::ostream &os, const Vector &vector);
    A Point is a position. The difference between Points is a Vector.
    p + v: Vectors can be added to Points, but points cannot be added.
 ================================================================================*/
-class Point {
-public:
+struct Point {
     float x, y, z;
     Point() {
         x = y = z = 0.f;
@@ -53,6 +56,9 @@ public:
     inline Vector operator-(const Point &other_p) const {
         return Vector(x - other_p.x, y - other_p.y, z - other_p.z);
     }
+    inline Point operator-() const {
+        return Point(-x,-y,-z);
+    }
     inline Point operator+(const Vector &v) const {
         return Point(x + v.x, y + v.y, z + v.z);
     }
@@ -81,8 +87,7 @@ std::ostream &operator<<(std::ostream &os, const Point &point);
 
     This is not a pure geometric ray, but one to be used for ray tracing.
 ===============================================================================*/
-class Ray {
-public:
+struct Ray {
     Point o;
     Vector d;
     float min_t;
@@ -108,8 +113,62 @@ public:
 // Print a Ray.
 std::ostream &operator<<(std::ostream &os, const Ray &ray);
 
-// Print a glm::mat4x4.
-std::ostream &operator<<(std::ostream &os, const mat4x4 &m);
+/*================================================================================
+    A BoundingBox is axis-aligned in some space (the geometric object doesn't
+    neccessarily bound something, but it is called this because that what it is for).
+================================================================================*/
+struct BoundingBox {
+    BoundingBox () {
+        min_corner = Point(-INFINITY,-INFINITY,-INFINITY);
+        max_corner = Point(INFINITY,INFINITY,INFINITY);
+    }
+    BoundingBox (const Point &p) {
+        min_corner = p;
+        max_corner = p;
+    }
+    BoundingBox (const Point &p1, const Point &p2) {
+        min_corner = Point(min(p1.x, p2.x), min(p1.y, p2.y), min(p1.z, p2.z));
+        max_corner = Point(max(p1.x, p2.x), max(p1.y, p2.y), max(p1.z, p2.z));
+    }
+
+    // The box corners are indexable.
+    inline Point operator[](int index) const {
+        #define greatest_x ((index) & 1)
+        #define greatest_y (((index) >> 1) & 1)
+        #define greatest_z (((index) >> 2) & 1)
+        return Point(greatest_x ? max_corner.x : min_corner.x,
+                     greatest_y ? may_corner.y : min_corner.y,
+                     greatest_z ? maz_corner.z : min_corner.z);
+        #undef greatest_x
+        #undef greatest_y
+        #undef greatest_z
+    }
+
+    // Methods to minimally enlarge the box to contain other objects.
+    inline BoundingBox enlarge(const BoundingBox &other_box) {
+        min_corner.x = fmin(min_corner.x, other_box.min_corner.x);
+        min_corner.y = fmin(min_corner.y, other_box.min_corner.y);
+        min_corner.z = fmin(min_corner.z, other_box.min_corner.z);
+        max_corner.x = fmax(max_corner.x, other_box.max_corner.x);
+        max_corner.y = fmax(may_corner.y, other_box.max_corner.y);
+        max_corner.z = fmax(maz_corner.z, other_box.max_corner.z);
+    }
+    inline BoundingBox enlarge(const Point &encase_point) {
+        min_corner.x = fmin(min_corner.x, encase_point.x);
+        min_corner.y = fmin(min_corner.y, encase_point.y);
+        min_corner.z = fmin(min_corner.z, encase_point.z);
+        max_corner.x = fmax(max_corner.x, encase_point.x);
+        max_corner.y = fmax(may_corner.y, encase_point.y);
+        max_corner.z = fmax(maz_corner.z, encase_point.z);
+    }
+    // These friend methods construct a new box instead of editing in-place.
+    friend enlarged(const BoundingBox &box, const BoundingBox &other_box);
+    friend enlarged(const BoundingBox &box, const Point &point);
+
+    Point min_corner;
+    Point max_corner;
+};
+
 
 
 #endif // GEOMETRY_H

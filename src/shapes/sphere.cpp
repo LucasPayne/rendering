@@ -3,8 +3,8 @@
 --------------------------------------------------------------------------------*/
 #include <math.h>
 #include "mathematics.hpp"
-#include "primitives.hpp"
-#include "primitives/sphere.hpp"
+#include "shape.hpp"
+#include "shapes/sphere.hpp"
 
 bool Sphere::intersect(Ray &in_ray, LocalGeometry *geom)
 {
@@ -44,4 +44,10 @@ bool Sphere::intersect(Ray &in_ray, LocalGeometry *geom)
     geom->p = in_ray.o + in_ray.d * in_ray.max_t;
     geom->n = geom->p - object_to_world.position();
     return true;
+}
+
+BoundingBox Sphere::object_bound() const
+{
+    Point p = Point(m_radius, m_radius, m_radius);
+    return BoundingBox(-p, p);
 }

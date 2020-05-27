@@ -1,17 +1,19 @@
-#ifndef PRIMITIVES_SPHERE_H
-#define PRIMITIVES_SPHERE_H
-#include "primitives.hpp"
+#ifndef SHAPES_SPHERE_H
+#define SHAPES_SPHERE_H
+#include "shape.hpp"
 
-class Sphere : public Primitive {
+class Sphere : public Shape {
 private:
     float m_radius;
 public:
     Sphere(const Transform &o2w, float radius) :
-        Primitive(o2w)
+        Shape(o2w)
     {
         m_radius = radius;
     }
+    // Shape implementations.
     bool intersect(Ray &ray, LocalGeometry *geom);
+    BoundingBox object_bound() const;
 };
 
 #endif // PRIMITIVES_SPHERE_H

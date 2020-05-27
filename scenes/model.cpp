@@ -4,7 +4,7 @@
 Scene *make_scene() {
     Scene *scene = new Scene();
 
-    scene->add_primitive(new TriangleMesh(Transform::translate(0,0,2) * Transform::y_rotation(M_PI/3), load_OFF_model("models/bunny.off", 0.8, Point(0,1,0), true)));
+    // scene->add_primitive(new TriangleMesh(Transform::translate(0,0,2) * Transform::y_rotation(M_PI/3), load_OFF_model("models/bunny.off", 0.8, Point(0,1,0), true)));
     scene->add_primitive(new TriangleMesh(Transform::translate(-2,0,4), load_OFF_model("models/icosahedron.off")));
     scene->add_primitive(new TriangleMesh(Transform::translate(2,0,4) * Transform::x_rotation(M_PI/4.333), load_OFF_model("models/icosahedron.off")));
 

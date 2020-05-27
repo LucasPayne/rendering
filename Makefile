@@ -31,16 +31,24 @@ build/mathematics/transform.o: src/mathematics/transform.cpp src/mathematics/tra
 build/mathematics/numerics.o: src/mathematics/numerics.cpp src/mathematics/numerics.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)
 
-build/primitives.o: build/primitives/primitives.o build/primitives/sphere.o build/primitives/triangle_mesh.o build/primitives/quadric.o
+build/primitives.o: build/primitives/primitives.o
 	ld -relocatable -o $@ $^
 build/primitives/primitives.o: src/primitives/primitives.cpp src/primitives.hpp src/mathematics.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)
-build/primitives/sphere.o: src/primitives/sphere.cpp src/primitives/sphere.hpp src/primitives.hpp
+
+
+build/shapes.o: build/shapes/shapes.o build/shapes/sphere.o build/shapes/plane.o
+	ld -relocatable -o $@ $^
+build/shapes/shapes.o: src/shapes/shapes.cpp src/shapes.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)
-build/primitives/triangle_mesh.o: src/primitives/triangle_mesh.cpp src/primitives/triangle_mesh.hpp src/primitives.hpp src/models.hpp
+build/shapes/sphere.o: src/shapes/sphere.cpp src/shapes/sphere.hpp src/shapes.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)
-build/primitives/quadric.o: src/primitives/quadric.cpp src/primitives/quadric.hpp src/primitives.hpp src/mathematics.hpp
+build/shapes/plane.o: src/shapes/plane.cpp src/shapes/plane.hpp src/shapes.hpp src/mathematics.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)
+# build/shapes/triangle_mesh.o: src/shapes/triangle_mesh.cpp src/shapes/triangle_mesh.hpp src/shapes.hpp src/models.hpp
+# 	$(CC) -c $< -o $@ $(CFLAGS)
+# build/shapes/quadric.o: src/shapes/quadric.cpp src/shapes/quadric.hpp src/shapes.hpp src/mathematics.hpp
+# 	$(CC) -c $< -o $@ $(CFLAGS)
 
 build/imaging.o: build/imaging/camera.o build/imaging/framebuffer.o
 	ld -relocatable -o $@ $^

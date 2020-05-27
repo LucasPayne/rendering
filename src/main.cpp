@@ -57,6 +57,9 @@ int main(int argc, char *argv[])
     }
     int horizontal_pixels = 480;
     int supersampling_width = 1;  // These are the defaults.
+    Point camera_position(0,0,0);
+    float camera_azimuth = 0;
+    float camera_altitude = 0;
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-r") == 0) {
             if (i+1 >= argc
@@ -66,14 +69,31 @@ int main(int argc, char *argv[])
             if (i+1 >= argc
                 || sscanf(argv[i+1], "%d", &supersampling_width) == EOF) arg_error("-s must be followed by a valid supersampling width.");
         }
+        else if (strcmp(argv[i], "-c") == 0) {
+            if (i+1 >= argc || sscanf(argv[i+1], "%f,%f,%f,%f,%f", &camera_position.x,&camera_position.y,&camera_position.z,
+                                                                   &camera_azimuth,&camera_altitude) == EOF) {
+                arg_error("-c must be followed by 5 comma-separated floats, for the position, azimuth, then altitude.\n");
+            }
+        }
     }
+
+    float caz = cos(camera_azimuth);
+    float saz = sin(camera_azimuth);
+    float cal = cos(camera_altitude);
+    float sal = sin(camera_altitude);
+    Vector right = Vector(caz, 0, saz);
+    Vector straight_forward = Vector(-saz, 0, caz);
+    Vector straight_up = glm::cross(straight_forward, right);
+    Vector forward = cal*straight_forward + sal*straight_up;
+    Point camera_look_at = camera_position + forward;
+
+    Camera *camera = new Camera(camera_position, camera_look_at, 60, 0.566);
 
     // This program should be linked with an implementation of make_scene,
     // which is specific to the scene being rendered.
     Scene *scene = make_scene();
     // Camera *camera = make_camera();
     // Default to a camera at the origin facing down the Z-axis.
-    Camera *camera = new Camera(Point(0,0,0), Point(0,0,1), 60, 0.566);
     std::cout << "Creating renderer:\n";
     std::cout << "------------------------------------------------------\n";
     Renderer *renderer = new Renderer(scene, camera, horizontal_pixels, supersampling_width);

@@ -44,3 +44,20 @@ std::ostream &operator<<(std::ostream &os, const mat4x4 &m)
     }
     os << ")\n";
 }
+
+/*--------------------------------------------------------------------------------
+    BoundingBox
+--------------------------------------------------------------------------------*/
+// Friend methods.
+BoundingBox enlarged(const BoundingBox &box, const BoundingBox &other_box)
+{
+    BoundingBox new_box = box;
+    box.enlarge(other_box);
+    return new_box;
+}
+BoundingBox enlarged(const BoundingBox &box, const Point &point)
+{
+    BoundingBox new_box = box;
+    box.enlarge(point);
+    return new_box;
+}

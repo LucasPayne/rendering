@@ -18,8 +18,14 @@ struct RenderingState {
         pj = 0;
         done = false;
     }
+    RenderingState(int _i, int _j, bool _done = false) {
+        // Rendering state for Renderer::render_direct.
+        i = _i;
+        j = _j;
+        done = _done;
+    }
     RenderingState(int _pi, int _pj, int _i, int _j, bool _done = false) {
-        // The more rendering state added, the worse this gets.
+        // Rendering state for Renderer::render.
         pi = _pi;
         pj = _pj;
         i = _i;
@@ -76,11 +82,11 @@ public:
 
     RGB trace_ray(Ray ray);
 
-    RenderingState render(RenderingState state, bool use_blocks = false, int exit_subblock = 0);
+    RenderingState render(RenderingState state = RenderingState(), bool use_blocks = false, int exit_subblock = 0);
     RenderingState render(bool use_blocks = false, int exit_subblock = 0) {
         render(RenderingState(), use_blocks, exit_subblock);
     }
-    void render_direct();
+    RenderingState render_direct(RenderingState state = RenderingState());
 
     FrameBuffer downsampled_framebuffer();
     // Alternatively, downsample to a framebuffer provided by the caller.

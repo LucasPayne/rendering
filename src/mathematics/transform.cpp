@@ -111,3 +111,18 @@ Transform Transform::scale(float amount)
              0,0,0,1);
     return Transform(m, minv);
 }
+
+// Transform an axis-aligned bounding box by bounding its oriented image.
+BoundingBox Transform::operator()(const BoundingBox &box) const
+{
+    const Transform &T = *this;
+    // Initialize to a transformed corner.
+    BoundingBox box_p(T(box[0]));
+    // Enlarge the box minimally to contain each successive transformed point.
+    for (int i = 1; i < 8; i++) {
+        box_p.enlarge(T(box[i]));
+    }
+    // The box is not the minimal aabb for the transformed points.
+    return box_p;
+}
+

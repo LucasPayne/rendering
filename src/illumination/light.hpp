@@ -20,7 +20,7 @@ struct VisibilityTester {
     void SetSegment(const Point &p1, const Point &p2) {
         float length = glm::length(p2 - p1);
         ray = Ray(p1, (p2 - p1) / length);
-        const float error_shift = 1e-5;
+        const float error_shift = 1e-3;
         ray.min_t = error_shift;
         ray.max_t = length;
     }

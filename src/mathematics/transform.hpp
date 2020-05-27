@@ -48,6 +48,8 @@ public:
         transformed_ray.max_t = ray.max_t;
         return transformed_ray;
     }
+    BoundingBox operator()(const BoundingBox &box) const;
+
     inline Transform inverse() const {
         return Transform(inverse_matrix, matrix);
     }

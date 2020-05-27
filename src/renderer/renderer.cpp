@@ -45,9 +45,7 @@ void Renderer::write_to_ppm(std::string const &filename)
 }
 
 // This render function is intended for just rendering an image in one pass.
-// It does have a single callback function, but this does not cause an exit from the loop, but
-// rather can be used to e.g. show a time estimate.
-void Renderer::render_direct()
+RenderingState Renderer::render_direct(RenderingState state)
 {
     int width = pixels_x();
     int height = pixels_y();
@@ -57,25 +55,21 @@ void Renderer::render_direct()
     Point origin = camera->position();
     Vector shifted_camera_top_left = camera->lens_point(0,1) - origin;
 
-    // float imaging_plane_ray_dx = camera->imaging_plane_width() / (width == 1 ? 1 : width - 1);
-    // float imaging_plane_ray_dy = camera->imaging_plane_height() / (height == 1 ? 1 : height - 1);
-    // Vector right_extent = camera->imaging_plane_width() * camera_right;
-    // Vector down_extent = -camera->imaging_plane_height() * camera_up;
-    // Vector ray_dx = camera_right * imaging_plane_ray_dx;
-    // Vector ray_dy = -camera_up * imaging_plane_ray_dy;
-    // Point p = camera->lens_point(0,1);
-    // Ray ray(camera->position(), p - camera->position());
-
+    bool started_j = false;
+    bool yielding = false;
     LocalGeometry geom;
-    for (int i = 0; i < width; i++) {
-        for (int j = 0; j < height; j++) {
+    for (int i = state.i; i < width; i++) {
+        for (int j = started_j ? 0 : state.j; j < height; j++) {
+            started_j = true;
+            if (yielding) return RenderingState(i,j);
 	    float x = pixels_x_inv() * i;
 	    float y = pixels_y_inv() * j;
             Ray ray(origin, shifted_camera_top_left + x*camera_right_extent + y*camera_down_extent);
             // std::cout << ray << "\n"; getchar();
-            if (intersect_primitive_vector(ray, scene->primitives, &geom)) {
+            // if (intersect_primitive_vector(ray, scene->primitives, &geom)) {
                 Vector n = glm::normalize(geom.n);
-                RGB color = RGB(0,0,0);
+                RGB ambient(0.1,0.1,0.1);
+                RGB color = ambient;
                 for (Light *light : scene->lights) {
                     Vector light_vector;
 	            VisibilityTester visibility_tester;
@@ -92,7 +86,11 @@ void Renderer::render_direct()
                 set_pixel(i, j, RGB(0.97,0.7,0.96));
             }
         }
+        // Set the yielding flag so the next stage of the loop can be entered, calculating the start state
+        // when this routine is reentered.
+        if (rendering_should_yield != NULL && rendering_should_yield()) yielding = true;
     }
+    return RenderingState(0,0,true);
 }
 
 RenderingState Renderer::render(RenderingState state, bool use_blocks, int exit_subblock)

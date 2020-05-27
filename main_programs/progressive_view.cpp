@@ -1,23 +1,10 @@
 #include "core.hpp"
 #include "gl.hpp"
 #include <math.h>
+#include <string>
 
-//---Input and looper functions probably need state!
-Renderer *g_renderer = NULL;
-Player *g_player = NULL;
 
-void key(int key, int action)
-{
-    if (action == GLFW_PRESS) {
-        if (key == GLFW_KEY_Q) {
-            g_opengl_context->close();
-            exit(EXIT_SUCCESS);
-        }
-        if (key == GLFW_KEY_R) {
-            g_renderer->write_to_ppm("last_render.ppm");
-        }
-    }
-}
+Player *g_player;
 
 bool pretty_much_equal(const Transform &t1, const Transform &t2)
 {
@@ -29,8 +16,6 @@ bool pretty_much_equal(const Transform &t1, const Transform &t2)
     float ep = sqrt(sum_squares);
     return ep < epsilon;
 }
-
-
 void force_aspect_ratio(int width, int height, double wanted_aspect_ratio)
 {
     double aspect_ratio = ((double) height) / width;
@@ -68,9 +53,11 @@ bool frame_time_has_passed()
     return false;
     #undef FRAME_TIME
 }
-
-class FrameBufferViewerLoop : public Looper {
+class FrameBufferViewerLoop : public Looper, public InputListener {
 private:
+
+    bool direct_rendering;
+
     bool rendering;
     Renderer *renderer;
     RenderingState rendering_state;
@@ -98,6 +85,7 @@ public:
     FrameBufferViewerLoop(Renderer *_renderer)
     {
         rendering = true;
+        direct_rendering = false;
         rendering_state = RenderingState();
         time_since_render = 0;
         average_render_time = 0;
@@ -145,9 +133,66 @@ public:
         glBindVertexArray(0);
 
     }
+    void progressive_view_loop();
+    void direct_view_loop();
     void loop();
+
+    void key_callback(int key, int action)
+    {
+        if (action == GLFW_PRESS) {
+            if (key == GLFW_KEY_Q) {
+                g_opengl_context->close();
+                exit(EXIT_SUCCESS);
+            }
+            if (key == GLFW_KEY_F) {
+                direct_rendering = !direct_rendering;
+                rendering_state = RenderingState();
+                // Don't clear the framebuffer, just start writing over it.
+            }
+            if (key == GLFW_KEY_C) {
+                // Print camera information, so for example the renderer can be reconfigured and the scene
+                // rendered from the same viewpoint.
+                std::cout << "Viewpoint information:\n";
+                std::cout << "    position: " << g_player->position << "\n";
+                std::cout << "    azimuth: " << g_player->azimuth << "\n";
+                std::cout << "    altitude: " << g_player->altitude << "\n";
+                std::cout << "command line:\n";
+                printf("    -c %.4f,%.4f,%.4f,%.4f,%.4f\n", g_player->position.x,g_player->position.y,g_player->position.z,
+                                                            g_player->azimuth,
+                                                            g_player->altitude);
+            }
+        }
+    }
+    void cursor_position_callback(double x, double y) {}
+    void mouse_button_callback(int button, int action) {}
 };
-void FrameBufferViewerLoop::loop() {
+
+
+void FrameBufferViewerLoop::direct_view_loop() {
+    // note:
+    //    As long as the image is being rendered, the logic of this loop is a free-for-all
+    //    attempt to make the image being synthesized kind of look good while still or moving.
+    rendering_state = renderer->render_direct(rendering_state);
+    if (!rendering_state.done) renderer->downsample_to_framebuffer(&downsampled_framebuffer);
+
+    shader_program.bind();
+    glUniform1i(uniform_location_image, 0);
+    glBindVertexArray(quad_vao);
+
+    texture.destroy();
+    texture = GLTexture(last_downsampled_framebuffer);
+    texture.bind(0);
+    glUniform1f(uniform_location_transparency, 1);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+    texture.destroy();
+    texture = GLTexture(downsampled_framebuffer);
+    texture.bind(0);
+    glUniform1f(uniform_location_transparency, 1);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+}
+void FrameBufferViewerLoop::progressive_view_loop()
+{
     // note:
     //    As long as the image is being rendered, the logic of this loop is a free-for-all
     //    attempt to make the image being synthesized kind of look good while still or moving.
@@ -156,7 +201,6 @@ void FrameBufferViewerLoop::loop() {
     // Camera control and movement through the "player".
     //--------------------------------------------------------------------------------
     last_camera_transform = renderer->camera->camera_to_world;
-        
     g_player->update();
     renderer->camera->set_transform(g_player->get_transform());
     //--------------------------------------------------------------------------------
@@ -236,25 +280,31 @@ void FrameBufferViewerLoop::loop() {
     glUniform1f(uniform_location_transparency, 1);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
+void FrameBufferViewerLoop::loop() {
+    if (direct_rendering) direct_view_loop();
+    else progressive_view_loop();
+}
 
-void main_program(int argc, char *argv[], Renderer *renderer)
+OpenGLContext framebuffer_viewer_context(Renderer *renderer, const std::string &name, int window_width = 512, int window_height = 512)
 {
-
-    // renderer->render();
-    // FrameBuffer fb = renderer->downsampled_framebuffer();
-    g_renderer = renderer; //make it globally available...
-
-    OpenGLContext context("Progressive view", 512, 512);
+    OpenGLContext context(name, window_width, window_height);
     context.open();
     renderer->set_yield_test(frame_time_has_passed);
+    FrameBufferViewerLoop *viewer_loop = new FrameBufferViewerLoop(renderer);
+    context.add_looper(viewer_loop);
+    context.add_input_listener(viewer_loop);
+    context.add_reshape_callback(reshape);
+
+    return context;
+}
+void main_program(int argc, char *argv[], Renderer *renderer)
+{
+    OpenGLContext context = framebuffer_viewer_context(renderer, "Progressive view");
 
     g_player = new Player(0,0,0, 0,0, 3);
     g_player->look_with_mouse = false;
     context.add_input_listener(g_player);
 
-    context.add_looper(new FrameBufferViewerLoop(renderer));
-    context.add_reshape_callback(reshape);
-    context.add_key_callback(key);
     context.enter_loop();
     context.close();
 }

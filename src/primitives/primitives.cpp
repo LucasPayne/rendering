@@ -14,3 +14,10 @@ bool intersect_primitive_vector(Ray &ray, std::vector<Primitive *> &primitives, 
     }
     return hit_any;
 }
+
+
+void Primitive::set_transform(const Transform &transform)
+{
+    object_to_world = transform;
+    world_to_object = transform.inverse();
+}
