@@ -19,7 +19,7 @@ clean:
 build/libraries/glad.o: libraries/glad/glad.c
 	$(CC) -c $< -o $@ $(CFLAGS)
 
-build/core.o: build/mathematics.o build/primitives.o build/illumination.o build/imaging.o build/scene.o build/renderer.o build/models.o build/interaction.o
+build/core.o: build/mathematics.o build/primitives.o build/illumination.o build/imaging.o build/scene.o build/renderer.o build/interaction.o build/shapes.o build/aggregates.o
 	ld -relocatable -o $@ $^
 
 build/mathematics.o: build/mathematics/geometry.o build/mathematics/transform.o build/mathematics/numerics.o
@@ -36,6 +36,11 @@ build/primitives.o: build/primitives/primitives.o
 build/primitives/primitives.o: src/primitives/primitives.cpp src/primitives.hpp src/mathematics.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)
 
+
+build/aggregates.o: build/aggregates/primitive_list.o
+	ld -relocatable -o $@ $^
+build/aggregates/primitive_list.o: src/aggregates/primitive_list.cpp src/aggregates/primitive_list.hpp src/primitives.hpp src/aggregates.hpp
+	$(CC) -c $< -o $@ $(CFLAGS)
 
 build/shapes.o: build/shapes/shapes.o build/shapes/sphere.o build/shapes/plane.o
 	ld -relocatable -o $@ $^
@@ -72,8 +77,8 @@ build/scene.o: src/scene/scene.cpp src/scene.hpp src/mathematics.hpp src/primiti
 build/renderer.o: src/renderer/renderer.cpp src/renderer.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)
 
-build/models.o: src/models/models.cpp src/models.hpp src/primitives.hpp src/illumination/color.hpp src/mathematics.hpp
-	$(CC) -c $< -o $@ $(CFLAGS)
+# build/models.o: src/models/models.cpp src/models.hpp src/primitives.hpp src/illumination/color.hpp src/mathematics.hpp
+# 	$(CC) -c $< -o $@ $(CFLAGS)
 
 build/gl_core.o: build/gl.o build/gl/gl_texture.o build/gl/gl_shader_program.o build/gl/gl_input.o
 	ld -relocatable -o $@ $^

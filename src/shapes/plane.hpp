@@ -1,7 +1,7 @@
 #ifndef PRIMITIVES_PLANE_H
 #define PRIMITIVES_PLANE_H
-#include "shape.hpp"
 #include <glm/glm.hpp>
+#include "shapes.hpp"
 
 class Plane : public Shape {
 public:
@@ -13,7 +13,7 @@ public:
     inline Vector y_vector() const { return m_y_vector; }
 
     // Shape implementations
-    bool intersect(Ray &ray, LocalGeometry *geom);
+    bool intersect(Ray &ray, LocalGeometry *geom) const;
     BoundingBox object_bound() const;
 
 private:

@@ -141,8 +141,8 @@ struct BoundingBox {
     BoundingBox (const Point &p1, const Point &p2) {
         // Return the minimum box around p1 and p2.
         // It is not assumed that each coordinate of p1 and p2 is correctly ordered.
-        min_corner = Point(min(p1.x, p2.x), min(p1.y, p2.y), min(p1.z, p2.z));
-        max_corner = Point(max(p1.x, p2.x), max(p1.y, p2.y), max(p1.z, p2.z));
+        min_corner = Point(fmin(p1.x, p2.x), fmin(p1.y, p2.y), fmin(p1.z, p2.z));
+        max_corner = Point(fmax(p1.x, p2.x), fmax(p1.y, p2.y), fmax(p1.z, p2.z));
     }
 
     // The box corners are indexable.
@@ -151,8 +151,8 @@ struct BoundingBox {
         #define greatest_y (((index) >> 1) & 1)
         #define greatest_z (((index) >> 2) & 1)
         return Point(greatest_x ? max_corner.x : min_corner.x,
-                     greatest_y ? may_corner.y : min_corner.y,
-                     greatest_z ? maz_corner.z : min_corner.z);
+                     greatest_y ? max_corner.y : min_corner.y,
+                     greatest_z ? max_corner.z : min_corner.z);
         #undef greatest_x
         #undef greatest_y
         #undef greatest_z
@@ -165,20 +165,20 @@ struct BoundingBox {
         min_corner.y = fmin(min_corner.y, other_box.min_corner.y);
         min_corner.z = fmin(min_corner.z, other_box.min_corner.z);
         max_corner.x = fmax(max_corner.x, other_box.max_corner.x);
-        max_corner.y = fmax(may_corner.y, other_box.max_corner.y);
-        max_corner.z = fmax(maz_corner.z, other_box.max_corner.z);
+        max_corner.y = fmax(max_corner.y, other_box.max_corner.y);
+        max_corner.z = fmax(max_corner.z, other_box.max_corner.z);
     }
     inline BoundingBox enlarge(const Point &encase_point) {
         min_corner.x = fmin(min_corner.x, encase_point.x);
         min_corner.y = fmin(min_corner.y, encase_point.y);
         min_corner.z = fmin(min_corner.z, encase_point.z);
         max_corner.x = fmax(max_corner.x, encase_point.x);
-        max_corner.y = fmax(may_corner.y, encase_point.y);
-        max_corner.z = fmax(maz_corner.z, encase_point.z);
+        max_corner.y = fmax(max_corner.y, encase_point.y);
+        max_corner.z = fmax(max_corner.z, encase_point.z);
     }
     // These friend methods construct a new box instead of editing in-place.
-    friend enlarged(const BoundingBox &box, const BoundingBox &other_box);
-    friend enlarged(const BoundingBox &box, const Point &point);
+    friend BoundingBox enlarged(const BoundingBox &box, const BoundingBox &other_box);
+    friend BoundingBox enlarged(const BoundingBox &box, const Point &point);
 
     Point min_corner;
     Point max_corner;

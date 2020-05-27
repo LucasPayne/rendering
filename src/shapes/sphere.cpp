@@ -3,10 +3,9 @@
 --------------------------------------------------------------------------------*/
 #include <math.h>
 #include "mathematics.hpp"
-#include "shape.hpp"
-#include "shapes/sphere.hpp"
+#include "shapes.hpp"
 
-bool Sphere::intersect(Ray &in_ray, LocalGeometry *geom)
+bool Sphere::intersect(Ray &in_ray, LocalGeometry *geom) const
 {
     Ray ray = world_to_object(in_ray);
 
@@ -40,7 +39,7 @@ bool Sphere::intersect(Ray &in_ray, LocalGeometry *geom)
     } else {
         in_ray.max_t = root1;
     }
-    geom->primitive = this;
+    geom->shape = this;
     geom->p = in_ray.o + in_ray.d * in_ray.max_t;
     geom->n = geom->p - object_to_world.position();
     return true;

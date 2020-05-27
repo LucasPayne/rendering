@@ -13,6 +13,5 @@ void main_program(int argc, char *argv[], Renderer *renderer)
         if (strcmp(argv[i], "-t") && i+1 < argc) filename = argv[i + 1];
     }
     renderer->render_direct();
-    // renderer->render();
     renderer->write_to_ppm(filename);
 }

@@ -99,7 +99,6 @@ int main(int argc, char *argv[])
     Renderer *renderer = new Renderer(scene, camera, horizontal_pixels, supersampling_width);
     renderer->print_properties();
     std::cout << "------------------------------------------------------\n";
-    //--------------------------------------------------------------------------------
 
     // Pass the arguments after -- (optional) to the linked program. This is so
     // arguments don't clash between renderer settings and whatever the linked program does.

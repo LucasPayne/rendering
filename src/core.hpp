@@ -1,12 +1,18 @@
 #ifndef CORE_H
 #define CORE_H
 
-#include "illumination.hpp"
 #include "mathematics.hpp"
-#include "primitives.hpp"
+
+#include "illumination.hpp"
 #include "imaging.hpp"
+
+#include "primitives.hpp"
+#include "shapes.hpp"
+#include "aggregates.hpp"
 #include "scene.hpp"
+
 #include "renderer.hpp"
+
 #include "interaction.hpp"
 
 // Library includes.
@@ -15,6 +21,7 @@ typedef glm::vec3 vec3;
 typedef glm::vec4 vec4;
 typedef glm::mat4x4 mat4x4;
 
+// Utilities.
 #define frand() ((1.0 / (RAND_MAX + 1.0)) * rand())
 #define frand_interval(A,B) (( A ) + (( B ) - ( A ))*frand())
 

@@ -1,5 +1,6 @@
 #include <iostream>
 #include "mathematics/geometry.hpp"
+#include <glm/glm.hpp>
 typedef glm::vec3 vec3;
 typedef glm::vec4 vec4;
 typedef glm::mat4x4 mat4x4;
@@ -52,12 +53,12 @@ std::ostream &operator<<(std::ostream &os, const mat4x4 &m)
 BoundingBox enlarged(const BoundingBox &box, const BoundingBox &other_box)
 {
     BoundingBox new_box = box;
-    box.enlarge(other_box);
+    new_box.enlarge(other_box);
     return new_box;
 }
 BoundingBox enlarged(const BoundingBox &box, const Point &point)
 {
     BoundingBox new_box = box;
-    box.enlarge(point);
+    new_box.enlarge(point);
     return new_box;
 }

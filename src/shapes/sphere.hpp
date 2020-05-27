@@ -1,6 +1,6 @@
 #ifndef SHAPES_SPHERE_H
 #define SHAPES_SPHERE_H
-#include "shape.hpp"
+#include "shapes.hpp"
 
 class Sphere : public Shape {
 private:
@@ -12,7 +12,7 @@ public:
         m_radius = radius;
     }
     // Shape implementations.
-    bool intersect(Ray &ray, LocalGeometry *geom);
+    bool intersect(Ray &ray, LocalGeometry *geom) const;
     BoundingBox object_bound() const;
 };
 

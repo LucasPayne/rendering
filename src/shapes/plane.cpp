@@ -1,10 +1,10 @@
 /*--------------------------------------------------------------------------------
     Plane primitive.
 --------------------------------------------------------------------------------*/
-#include "mathematics.hpp"
-#include "shape.hpp"
 #include <math.h>
 #include <glm/glm.hpp>
+#include "mathematics.hpp"
+#include "shapes.hpp"
 
 Plane::Plane(Point position, Vector x_extent, Vector y_extent, float width, float height)
 {
@@ -28,7 +28,7 @@ Plane::Plane(Point position, Vector x_extent, Vector y_extent, float width, floa
     m_height = height;
 }
 
-bool Plane::intersect(Ray &in_ray, LocalGeometry *geom)
+bool Plane::intersect(Ray &in_ray, LocalGeometry *geom) const
 {
     Ray ray = world_to_object(in_ray);
     
@@ -46,6 +46,7 @@ bool Plane::intersect(Ray &in_ray, LocalGeometry *geom)
     in_ray.max_t = t;
     geom->p = in_ray.o + in_ray.d * t;
     geom->n = m_normal;
+    geom->shape = this;
     return true;
 }
 

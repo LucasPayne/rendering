@@ -1,7 +1,8 @@
 #ifndef PRIMITIVES_H
 #define PRIMITIVES_H
-#include "mathematics.hpp"
 #include <vector>
+#include "mathematics.hpp"
+#include "shapes.hpp"
 
 /*--------------------------------------------------------------------------------
 A Primitive is more general than just an object in the scene.
@@ -48,16 +49,14 @@ public:
         return shape->intersect(ray, geom);
     }
     virtual bool does_intersect(Ray &ray) const {
-        return shape->does_intersect(ray, geom);
+        return shape->does_intersect(ray);
     }
     virtual BoundingBox world_bound() const {
         return shape->world_bound();
     };
 private:
     Shape *shape;
-
-    //---Here for convenience, before a material system.
-    RGB debug_color;
+    //----material stuff.
 };
 
 class Aggregate : public Primitive {
@@ -119,11 +118,5 @@ private:
     AreaLight *areaLight;
 };
 */
-
-
-// Routine to intersect with a vector of primitives. This acts as a basic list, whose members are exhaustively searched.
-// -
-// This should be a type of primitive instead of requiring a separate routine.
-bool intersect_primitive_vector(Ray &ray, std::vector<Primitive *> &primitives, LocalGeometry *geom);
 
 #endif // PRIMITIVES_H

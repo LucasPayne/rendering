@@ -1,5 +1,5 @@
-#ifndef SHAPE_H
-#define SHAPE_H
+#ifndef SHAPES_H
+#define SHAPES_H
 #include <vector>
 #include "mathematics.hpp"
 
@@ -8,6 +8,8 @@ class LocalGeometry;
 
 class Shape {
 public:
+
+    Shape () {} // Empty default constructor so that derived classes do not have to call the base class constructor directly.
     Shape (const Transform &o2w) :
         object_to_world{o2w}, world_to_object{o2w.inverse()}
     {}
@@ -28,8 +30,8 @@ public:
     // These are the same methods as in the Primitive class. Most likely a geometric primitive
     // will pass calls to their intersection functions to a shape.
     virtual bool can_intersect() const { return true; }; // Derived shapes which are self-refining can override this.
-    virtual bool intersect(Ray &ray, LocalGeometry *geom); // Defaults to error.
-    virtual bool does_intersect(Ray &ray); // Defaults to calling intersect() and ignoring everything except whether it intersects.
+    virtual bool intersect(Ray &ray, LocalGeometry *geom) const; // Defaults to error.
+    virtual bool does_intersect(Ray &ray) const; // Defaults to calling intersect() and ignoring everything except whether it intersects.
 
     // Shape refinement is primarily for triangle meshes and things tessellated into triangles.
     // virtual void refine(vector<Reference<Shape> > &refined) const;
@@ -88,16 +90,14 @@ struct LocalGeometry {
         p = _p;
         n = _n;
     }
-
-    Shape *shape;
+    const Shape *shape;
     Point p;  // Point on the shape.
     Vector n; // Normal outward from the surface element.
 };
 
 #include "shapes/sphere.hpp"
-#include "shapes/triangle_mesh.hpp"
-#include "shapes/quadric.hpp"
 #include "shapes/plane.hpp"
+// #include "shapes/triangle_mesh.hpp"
+// #include "shapes/quadric.hpp"
 
-
-#endif // SHAPE_H
+#endif // SHAPES_H

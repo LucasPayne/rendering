@@ -3,15 +3,17 @@
 #include "illumination/color.hpp"
 #include "primitives.hpp"
 
-class Scene;
-
-// A VisibilityTester is a closure encapsulating what should be done to test light occlusion, if that turns out to be needed.
-// This is given when radiance incoming to a point is calculated, and encapsulates the test needed to determine if the light actually
-// did get there, giving that radiance.
-// -
-// Idea from pbr p608.
-// There is different logic for visibility tests to be done for point and directional lights.
-// Point light occlusion should be done in a segment. The ray min_t and max_t values are used here.
+/*--------------------------------------------------------------------------------
+    A VisibilityTester is a closure encapsulating what should be done to test light
+    occlusion, if that turns out to be needed. This is given when radiance incoming
+    to a point is calculated, and encapsulates the test needed to determine if the
+    light actually did get there, giving that radiance.
+    -
+    Idea from pbr p608.
+    There is different logic for visibility tests to be done for point and directional
+    lights.  Point light occlusion should be done in a segment. The ray min_t and max_t
+    values are used here.
+--------------------------------------------------------------------------------*/
 struct VisibilityTester {
     // The data is just a ray. The VisibilityTester is basically a wrapper around a ray, with some extra methods.
     Ray ray;
@@ -30,7 +32,7 @@ struct VisibilityTester {
         ray = Ray(origin, direction);
         ray.min_t = error_shift;
     }
-    bool unoccluded(Scene *scene) const;
+    bool unoccluded(const Primitive *primitive);
 };
 
 /*

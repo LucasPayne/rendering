@@ -47,29 +47,35 @@ void Renderer::write_to_ppm(std::string const &filename)
 // This render function is intended for just rendering an image in one pass.
 RenderingState Renderer::render_direct(RenderingState state)
 {
+    // Initialize values used to generate rays.
     int width = pixels_x();
     int height = pixels_y();
-
     Vector camera_right_extent = camera->imaging_plane_width() * camera->camera_to_world(Vector(1,0,0));
     Vector camera_down_extent = camera->imaging_plane_height() * camera->camera_to_world(Vector(0,-1,0));
     Point origin = camera->position();
     Vector shifted_camera_top_left = camera->lens_point(0,1) - origin;
-
+    
+    // There is some complication in the loop so that this function can yield and be reentered.
     bool started_j = false;
     bool yielding = false;
-    LocalGeometry geom;
     for (int i = state.i; i < width; i++) {
         for (int j = started_j ? 0 : state.j; j < height; j++) {
             started_j = true;
             if (yielding) return RenderingState(i,j);
+
+            // Generate the ray.
 	    float x = pixels_x_inv() * i;
 	    float y = pixels_y_inv() * j;
             Ray ray(origin, shifted_camera_top_left + x*camera_right_extent + y*camera_down_extent);
-            // std::cout << ray << "\n"; getchar();
-            // if (intersect_primitive_vector(ray, scene->primitives, &geom)) {
-                Vector n = glm::normalize(geom.n);
+
+            // Ray trace.
+            LocalGeometry geom;
+            if (scene->intersect(ray, &geom)) {
+                Vector n = glm::normalize(geom.n); //--need to normalize? Should just leave it to the primitive.
+                // Initialize the returned color to an ambient (hack) term.
                 RGB ambient(0.1,0.1,0.1);
                 RGB color = ambient;
+                // Compute direct lighting.
                 for (Light *light : scene->lights) {
                     Vector light_vector;
 	            VisibilityTester visibility_tester;
@@ -83,11 +89,12 @@ RenderingState Renderer::render_direct(RenderingState state)
                 color *= RGB(1,1,1);
                 set_pixel(i, j, color);
             } else {
+                // Set to a background color.
                 set_pixel(i, j, RGB(0.97,0.7,0.96));
             }
         }
         // Set the yielding flag so the next stage of the loop can be entered, calculating the start state
-        // when this routine is reentered.
+        // for when this routine is reentered.
         if (rendering_should_yield != NULL && rendering_should_yield()) yielding = true;
     }
     return RenderingState(0,0,true);
@@ -95,6 +102,9 @@ RenderingState Renderer::render_direct(RenderingState state)
 
 RenderingState Renderer::render(RenderingState state, bool use_blocks, int exit_subblock)
 {
+    // have to redo some stuff
+    return RenderingState(0,0,true);
+/*
     static int counter = 0;
 
     float x, y;
@@ -153,10 +163,13 @@ RenderingState Renderer::render(RenderingState state, bool use_blocks, int exit_
         }
     }
     return RenderingState(0,0,0,0,true); // The rendering has finished.
+    */
 }
 
 RGB Renderer::trace_ray(Ray ray)
 {
+    return RGB(1,0,1);
+    /*
     LocalGeometry geom;
     if (intersect_primitive_vector(ray, scene->primitives, &geom)) {
         Vector n = glm::normalize(geom.n);
@@ -184,6 +197,7 @@ RGB Renderer::trace_ray(Ray ray)
     // make a nice blue sky
     float yv = 0.15*(ray.o.y);
     return RGB(0.85+yv,0.85+yv,1);
+    */
 }
 
 void Renderer::print_properties() const

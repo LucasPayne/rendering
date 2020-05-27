@@ -1,26 +1,27 @@
 #include "primitives.hpp"
+#include "aggregates/primitive_list.hpp"
 #include <vector>
 
 Primitive *PrimitiveList::add(Primitive *primitive)
 {
     primitives.push_back(primitive);
     // Make sure to update the world-space bounding box.
-    m_bounding_box.enlarge(primitive->world_bound());
+    m_world_bound.enlarge(primitive->world_bound());
     return primitive;
 }
 
-BoundingBox PrimitiveList::world_bound()
+BoundingBox PrimitiveList::world_bound() const
 {
     // The bounding box is cached in the PrimitiveList, and built up when the list is being added to.
-    return m_bounding_box;
+    return m_world_bound;
 }
 
 // Intersection routines are just passed down to every primitive.
-bool PrimitiveList::intersect(Ray &ray, LocalGeometry *out_geom)
+bool PrimitiveList::intersect(Ray &ray, LocalGeometry *out_geom) const
 {
     bool intersected = false;
     LocalGeometry geom;
-    for (const Primitive * &primitive : primitives) {
+    for (const Primitive * primitive : primitives) {
         LocalGeometry primitive_geom;
         if (primitive->intersect(ray, &primitive_geom)) {
             intersected = true;
@@ -31,9 +32,9 @@ bool PrimitiveList::intersect(Ray &ray, LocalGeometry *out_geom)
     if (intersected) *out_geom = geom;
     return intersected;
 }
-bool PrimitiveList::does_intersect(Ray &ray)
+bool PrimitiveList::does_intersect(Ray &ray) const
 {
-    for (const Primitive * &primitive : primitives) {
+    for (const Primitive * primitive : primitives) {
         if (primitive->does_intersect(ray)) return true;
     }
     return false;
