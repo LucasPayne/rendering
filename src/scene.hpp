@@ -19,12 +19,8 @@ public:
         primitives = PrimitiveList();
         lights = std::vector<Light *>(0);
     }
-    inline void add_primitive(Primitive *prim) {
-        primitives.add(prim);
-    }
-    inline void add_light(Light *light) {
-        lights.push_back(light);
-    }
+    void add_primitive(Primitive *prim);
+    void add_light(Light *light);
     // Aggregate-primitive interface implementations (just passing to underlying aggregate primitive holding the scene primitives).
     BoundingBox world_bound() const;
     bool intersect(Ray &ray, LocalGeometry *info) const;

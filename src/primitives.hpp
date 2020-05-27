@@ -39,8 +39,12 @@ private:
     can be associated more things that are needed for it to be rendered, and
     the Shape class can purely contain geometric things.
 --------------------------------------------------------------------------------*/
-class GeometricPrimitive : Primitive {
+class GeometricPrimitive : public Primitive {
 public:
+    GeometricPrimitive(const Shape *_shape) :
+        shape(_shape)
+    {}
+
     // Pass on some routines to the underlying shape.
     virtual bool can_intersect() const { 
         return shape->can_intersect();
@@ -55,7 +59,7 @@ public:
         return shape->world_bound();
     };
 private:
-    Shape *shape;
+    const Shape *shape;
     //----material stuff.
 };
 

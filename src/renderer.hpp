@@ -80,8 +80,6 @@ public:
         rendering_should_yield = yield_test;
     }
 
-    RGB trace_ray(Ray ray);
-
     RenderingState render(RenderingState state = RenderingState(), bool use_blocks = false, int exit_subblock = 0);
     RenderingState render(bool use_blocks = false, int exit_subblock = 0) {
         render(RenderingState(), use_blocks, exit_subblock);
