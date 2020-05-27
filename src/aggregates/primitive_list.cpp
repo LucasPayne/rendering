@@ -1,6 +1,8 @@
 #include "primitives.hpp"
 #include "aggregates/primitive_list.hpp"
 #include <vector>
+#include <iostream>
+#include <stdlib.h>
 
 Primitive *PrimitiveList::add(Primitive *primitive)
 {
@@ -17,8 +19,11 @@ BoundingBox PrimitiveList::world_bound() const
 }
 
 // Intersection routines are just passed down to every primitive.
+// However, first the bounding box is checked.
 bool PrimitiveList::intersect(Ray &ray, LocalGeometry *out_geom) const
 {
+    if (!world_bound().intersect(ray)) return false;
+
     bool intersected = false;
     LocalGeometry geom;
     for (const Primitive * primitive : primitives) {
@@ -34,6 +39,8 @@ bool PrimitiveList::intersect(Ray &ray, LocalGeometry *out_geom) const
 }
 bool PrimitiveList::does_intersect(Ray &ray) const
 {
+    if (!world_bound().intersect(ray)) return false;
+
     for (const Primitive * primitive : primitives) {
         if (primitive->does_intersect(ray)) return true;
     }

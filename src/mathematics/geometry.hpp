@@ -180,10 +180,17 @@ struct BoundingBox {
     friend BoundingBox enlarged(const BoundingBox &box, const BoundingBox &other_box);
     friend BoundingBox enlarged(const BoundingBox &box, const Point &point);
 
+    // Bounding box intersection with a ray. If they intersect, the
+    // range along the ray that is on or inside the box is returned.
+    // (This is the intersection of the range of the ray segment and the range that the line determined by the ray
+    //  intersects with the box.)
+    bool intersect(const Ray &ray, float *t0, float *t1) const;
+    bool intersect(const Ray &ray) const;
+
     Point min_corner;
     Point max_corner;
 };
-
-
+// Print a BoundingBox.
+std::ostream &operator<<(std::ostream &os, const BoundingBox &box);
 
 #endif // GEOMETRY_H

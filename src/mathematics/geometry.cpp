@@ -44,12 +44,12 @@ std::ostream &operator<<(std::ostream &os, const mat4x4 &m)
         }
     }
     os << ")\n";
+    return os;
 }
 
 /*--------------------------------------------------------------------------------
     BoundingBox
 --------------------------------------------------------------------------------*/
-// Friend methods.
 BoundingBox enlarged(const BoundingBox &box, const BoundingBox &other_box)
 {
     BoundingBox new_box = box;
@@ -61,4 +61,63 @@ BoundingBox enlarged(const BoundingBox &box, const Point &point)
     BoundingBox new_box = box;
     new_box.enlarge(point);
     return new_box;
+}
+
+/* pbr 2e, page 194 */
+bool BoundingBox::intersect(const Ray &ray, float *out_t0, float *out_t1) const
+{
+    float t0 = ray.min_t;
+    float t1 = ray.max_t;
+    float inv_d, new_t0, new_t1;
+
+    #define SWAP(X,Y) {\
+        float temp = ( X );\
+        ( X ) = ( Y );\
+        ( Y ) = temp;\
+    }
+
+    //-----This should really be a loop, need to change the Point class a bit.
+    inv_d = 1.0 / ray.d.x; // IEEE floating point gives infinite values which should work here.
+    new_t0 = inv_d * (min_corner.x - ray.o.x);
+    new_t1 = inv_d * (max_corner.x - ray.o.x);
+    // Order the new range.
+    if (new_t1 < new_t0) SWAP(new_t0, new_t1);
+    // Take the intersection of the ranges.
+    t0 = new_t0 > t0 ? new_t0 : t0;
+    t1 = new_t1 < t1 ? new_t1 : t1;
+    if (t1 < t0) return false;
+
+    // Y slabs
+    inv_d = 1.0 / ray.d.y;
+    new_t0 = inv_d * (min_corner.y - ray.o.y);
+    new_t1 = inv_d * (max_corner.y - ray.o.y);
+    if (new_t1 < new_t0) SWAP(new_t0, new_t1);
+    t0 = new_t0 > t0 ? new_t0 : t0;
+    t1 = new_t1 < t1 ? new_t1 : t1;
+    if (t1 < t0) return false;
+
+    // Z slabs
+    inv_d = 1.0 / ray.d.z;
+    new_t0 = inv_d * (min_corner.z - ray.o.z);
+    new_t1 = inv_d * (max_corner.z - ray.o.z);
+    if (new_t1 < new_t0) SWAP(new_t0, new_t1);
+    t0 = new_t0 > t0 ? new_t0 : t0;
+    t1 = new_t1 < t1 ? new_t1 : t1;
+    if (t1 < t0) return false;
+
+    *out_t0 = t0;
+    *out_t1 = t1;
+    return true;
+    #undef SWAP
+}
+bool BoundingBox::intersect(const Ray &ray) const
+{
+    float t0, t1;
+    return intersect(ray, &t0, &t1);
+}
+
+std::ostream &operator<<(std::ostream &os, const BoundingBox &box)
+{
+    os << "BoundingBox(" << box.min_corner << ", " << box.max_corner << ")";
+    return os;
 }
