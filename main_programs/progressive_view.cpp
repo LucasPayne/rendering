@@ -137,6 +137,7 @@ public:
     void direct_view_loop();
     void loop();
 
+
     void key_callback(int key, int action)
     {
         if (action == GLFW_PRESS) {
@@ -145,7 +146,14 @@ public:
                 exit(EXIT_SUCCESS);
             }
             if (key == GLFW_KEY_F) {
-                direct_rendering = !direct_rendering;
+                if (direct_rendering) {
+                    g_player->listening = true;
+                    direct_rendering = false;
+                }
+                else {
+                    g_player->listening = false;
+                    direct_rendering = true;
+                }
                 rendering_state = RenderingState();
                 // Don't clear the framebuffer, just start writing over it.
             }
@@ -163,8 +171,9 @@ public:
             }
         }
     }
-    void cursor_position_callback(double x, double y) {}
-    void mouse_button_callback(int button, int action) {}
+    // void cursor_position_callback(double x, double y) {}
+    // void cursor_move_callback(double dx, double dy) {}
+    // void mouse_button_callback(int button, int action) {}
 };
 
 
@@ -291,6 +300,7 @@ OpenGLContext framebuffer_viewer_context(Renderer *renderer, const std::string &
     context.open();
     renderer->set_yield_test(frame_time_has_passed);
     FrameBufferViewerLoop *viewer_loop = new FrameBufferViewerLoop(renderer);
+    viewer_loop->listening = true;
     context.add_looper(viewer_loop);
     context.add_input_listener(viewer_loop);
     context.add_reshape_callback(reshape);
@@ -303,6 +313,7 @@ void main_program(int argc, char *argv[], Renderer *renderer)
 
     g_player = new Player(0,0,0, 0,0, 3);
     g_player->look_with_mouse = false;
+    g_player->listening = true;
     context.add_input_listener(g_player);
 
     context.enter_loop();

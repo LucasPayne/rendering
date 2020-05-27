@@ -25,21 +25,8 @@ void Player::key_callback(int key, int action)
         }
     }
 }
-void Player::cursor_position_callback(double x, double y)
+void Player::cursor_move_callback(double dx, double dy)
 {
-    // Probably only one player, whatever ...
-    static float prev_x;
-    static float prev_y;
-    static bool prev_set = false;
-    if (!prev_set) {
-        prev_x = 0; prev_y = 0;
-        prev_set = true;
-    }
-    float dx = x - prev_x;
-    float dy = y - prev_y;
-    prev_x = x;
-    prev_y = y;
-
     float mouse_sensitivity = 2;
     if (look_with_mouse) {
         azimuth -= dx * mouse_sensitivity;
@@ -47,42 +34,6 @@ void Player::cursor_position_callback(double x, double y)
         lock_altitude();
     }
 }
-void Player::mouse_button_callback(int button, int action)
-{
-
-}
-// void Player::mouse_move_listener(float x, float y, float dx, float dy)
-// {
-//     PlayerController *player = g->data;
-//     float mouse_sensitivity = 2;
-//     if (player->look_with_mouse) {
-//         player->azimuth += dx * mouse_sensitivity;
-//         player->altitude -= dy * mouse_sensitivity;
-//         lock_altitude(player);
-//     }
-// }
-// 
-// void PlayerController_key_listener(Logic *g, int key, int action, int mods)
-// {
-//     PlayerController *player = g->data;
-//     if (action == GLFW_PRESS) {
-//         if (key == GLFW_KEY_E) {
-//             player->look_with_mouse = !player->look_with_mouse;
-//         }
-//         if (key == GLFW_KEY_X) {
-//             player->scrollable_speed = !player->scrollable_speed;
-//         }
-//     }
-// }
-// void PlayerController_scroll_listener(Logic *g, float dy)
-// {
-//     PlayerController *player = g->data;
-//     if (player->scrollable_speed) {
-//         if (player->speed > player->max_speed) player->speed = player->max_speed;
-//         if (player->speed < player->min_speed) player->speed = player->min_speed;
-//         player->speed += 10*dy;
-//     }
-// }
 
 void Player::update()
 {

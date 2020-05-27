@@ -110,7 +110,7 @@ void OpenGLContext::glfw_key_callback(GLFWwindow *window, int key,
 {
     key_callback_arrows_down(window, key, scancode, action, mods);
     for (InputListener * il : g_opengl_context->m_input_listeners) {
-        il->key_callback(key, action);
+        if (il->listening) il->key_callback(key, action);
     }
     for (const KeyCallback &cb : g_opengl_context->m_key_callbacks) {
         cb(key, action);
@@ -118,6 +118,7 @@ void OpenGLContext::glfw_key_callback(GLFWwindow *window, int key,
 }
 void OpenGLContext::glfw_cursor_position_callback(GLFWwindow *window, double window_x, double window_y)
 {
+
     // Convert to more meaningful coordinates, (0,0) bottom left corner of viewport, (1,1) top right.
     GLint viewport[4]; //x,y,width,height
     glGetIntegerv(GL_VIEWPORT, viewport);
@@ -125,8 +126,23 @@ void OpenGLContext::glfw_cursor_position_callback(GLFWwindow *window, double win
     float y = 1 - (window_y - viewport[1]) / (1.0 * viewport[3]);
     // printf("(%.2f,%.2f)\n", x,y);
 
+    static float last_x, last_y;
+    static bool last_set = false;
+    if (!last_set) {
+        last_x = x;
+        last_y = y;
+        last_set = true;
+    }
+    float dx = x - last_x;
+    float dy = y - last_y;
+    last_x = x;
+    last_y = y;
+
     for (InputListener * il : g_opengl_context->m_input_listeners) {
-        il->cursor_position_callback(x, y);
+        if (il->listening) {
+            il->cursor_position_callback(x, y);
+            il->cursor_move_callback(dx, dy);
+        }
     }
     for (const CursorPositionCallback &cb : g_opengl_context->m_cursor_position_callbacks) {
         cb(x, y);
@@ -135,7 +151,7 @@ void OpenGLContext::glfw_cursor_position_callback(GLFWwindow *window, double win
 void OpenGLContext::glfw_mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
 {
     for (InputListener * il : g_opengl_context->m_input_listeners) {
-        il->mouse_button_callback(button, action);
+        if (il->listening) il->mouse_button_callback(button, action);
     }
     for (const MouseButtonCallback &cb : g_opengl_context->m_mouse_button_callbacks) {
         cb(button, action);

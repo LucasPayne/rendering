@@ -58,8 +58,9 @@ public:
     }
     // Input event callback functions, implementation of virtual methods in InputListener base class.
     void key_callback(int key, int action);
-    void cursor_position_callback(double x, double y);
-    void mouse_button_callback(int button, int action);
+    void cursor_move_callback(double dx, double dy);
+    // void cursor_position_callback(double x, double y);
+    // void mouse_button_callback(int button, int action);
 private:
 };
 

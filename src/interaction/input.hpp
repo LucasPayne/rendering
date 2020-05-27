@@ -4,9 +4,11 @@
 class InputListener {
 private:
 public:
-    virtual void key_callback(int key, int action) = 0;
-    virtual void cursor_position_callback(double x, double y) = 0;
-    virtual void mouse_button_callback(int button, int action) = 0;
+    bool listening;
+    virtual void key_callback(int key, int action) {}
+    virtual void cursor_position_callback(double x, double y) {}
+    virtual void cursor_move_callback(double x, double y) {}
+    virtual void mouse_button_callback(int button, int action) {}
 };
 
 #endif // INTERACTION_INPUT_H

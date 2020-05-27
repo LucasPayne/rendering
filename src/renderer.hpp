@@ -36,21 +36,6 @@ struct RenderingState {
 
 // A Renderer encapsulates the Scene and Camera, and other things rendered and used for rendering.
 class Renderer {
-private:
-    int m_downsampled_horizontal_pixels;
-    int m_downsampled_vertical_pixels;
-    int m_horizontal_pixels;
-    int m_vertical_pixels;
-    int m_supersample_width; // A square of supersamples are used, with this width x width.
-
-    // Raster-space--screen-space conversions are made a lot, so cache the inverses of the pixel extents.
-    float m_horizontal_pixels_inv;
-    float m_vertical_pixels_inv;
-
-    int m_active_frame;
-    std::vector<FrameBuffer> m_frames;
-
-    bool (*rendering_should_yield)(); //= NULL?
 public:
     Scene *scene;
     Camera *camera;
@@ -125,6 +110,23 @@ public:
         m_frames[m_active_frame].clear(color);
     }
     void print_properties() const;
+
+private:
+    // Renderer private data.
+    int m_downsampled_horizontal_pixels;
+    int m_downsampled_vertical_pixels;
+    int m_horizontal_pixels;
+    int m_vertical_pixels;
+    int m_supersample_width; // A square of supersamples are used, with this width x width.
+
+    // Raster-space--screen-space conversions are made a lot, so cache the inverses of the pixel extents.
+    float m_horizontal_pixels_inv;
+    float m_vertical_pixels_inv;
+
+    int m_active_frame;
+    std::vector<FrameBuffer> m_frames;
+    bool (*rendering_should_yield)(); //= NULL?
 };
+
 
 #endif // RENDERER_H
