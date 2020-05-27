@@ -3,17 +3,68 @@
 #include "mathematics.hpp"
 #include <vector>
 
+/*--------------------------------------------------------------------------------
+A Primitive is more general than just an object in the scene.
+They are what is hit by rays, but that can include ideas like
+    "two icosahedra can be hit by a ray",
+and that means the primitive "two icosahedra" can pass intersection routines
+down to the two icosahedra it contains, which are themselves primitives.
+
+This idea is used to unify atomic shapes, self-refining shapes and recursively-contained
+acceleration structures. Each traced ray just "intersects" a root primitive, the scene.
+
+This is heavily based off of the pbrt v2 implementation of the ideas in James Arvo and David Kirk's
+paper, "The Ray Tracing Kernel".
+--------------------------------------------------------------------------------*/
 class Primitive {
 public:    
     Primitive() {}
 
+    // Pure virtual functions, must be implemented by derived classes.
     virtual BoundingBox world_bound() const = 0;
 
-    virtual bool can_intersect() const = 0;
-    virtual bool intersect(Ray &ray, LocalGeometry *info) = 0;
-    // does_intersect() is just a predicate, so can probably be made more efficient than intersect().
-    virtual bool does_intersect(Ray &ray) = 0;
+    // These are pure virtual so that derived classes can, for example, redefine can_intersect()
+    // to return false, and give an error on these so that further derived classes don't have to implement it themselves.
+    virtual bool intersect(Ray &ray, LocalGeometry *info) const = 0;
+    virtual bool does_intersect(Ray &ray) const = 0;
+
+    // Overridable functions.
+    virtual bool can_intersect() const { return true; }
 private:    
+};
+
+/*--------------------------------------------------------------------------------
+    A GeometricPrimitive encapsulates a single shape. In this way, the shape
+    can be associated more things that are needed for it to be rendered, and
+    the Shape class can purely contain geometric things.
+--------------------------------------------------------------------------------*/
+class GeometricPrimitive : Primitive {
+public:
+    // Pass on some routines to the underlying shape.
+    virtual bool can_intersect() const { 
+        return shape->can_intersect();
+    }
+    virtual bool intersect(Ray &ray, LocalGeometry *geom) const {
+        return shape->intersect(ray, geom);
+    }
+    virtual bool does_intersect(Ray &ray) const {
+        return shape->does_intersect(ray, geom);
+    }
+    virtual BoundingBox world_bound() const {
+        return shape->world_bound();
+    };
+private:
+    Shape *shape;
+
+    //---Here for convenience, before a material system.
+    RGB debug_color;
+};
+
+class Aggregate : public Primitive {
+public:
+    // If there is anything that doesn't make sense for aggregates available in the Primitive interface,
+    // override it to give an error here.
+private:
 };
 
 /*
@@ -44,16 +95,6 @@ protected:
 */
 
 
-class GeometricPrimitive : Primitive {
-public:
-    virtual bool can_intersect() const;
-private:
-};
-
-bool GeometricPrimitive::can_intersect() const {
-    return true;
-}
-
 /*
 // GeometricPrimitive Declarations
 class GeometricPrimitive : public Primitive {
@@ -79,9 +120,6 @@ private:
 };
 */
 
-class Aggregate : public Primitive {
-
-};
 
 // Routine to intersect with a vector of primitives. This acts as a basic list, whose members are exhaustively searched.
 // -

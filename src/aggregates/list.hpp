@@ -1,51 +1,34 @@
-#ifndef PRIMITIVES_AGGREGATES_LIST_H
-#define PRIMITIVES_AGGREGATES_LIST_H
+#ifndef PRIMITIVES_AGGREGATES_PRIMITIVELIST_H
+#define PRIMITIVES_AGGREGATES_PRIMITIVELIST_H
 #include "primitives.hpp"
 #include <vector>
 
-class List : public Aggregate {
-private:
-    float m_height;
-    float m_width;
-    Point m_position;
-
-    // Remember to update these if the transform is changed!
-    Vector m_normal;
-    Vector m_x_vector;
-    Vector m_y_vector;
+/*--------------------------------------------------------------------------------
+    A PrimitiveList just holds a list, and passes calls down to all primitives
+    in the list.
+    
+    This is the root primitive held by the scene. By default, adding to the scene
+    adds to this root list.
+--------------------------------------------------------------------------------*/
+class PrimitiveList : public Aggregate {
 public:
-    Plane(Point position, Vector x_extent, Vector y_extent, float width, float height)
-    {
-        // orthonormalize an internal basis for the plane.
-        x_extent = glm::normalize(x_extent);
-        y_extent -= x_extent * glm::dot(y_extent, x_extent);
-        y_extent = glm::normalize(y_extent);
-        Vector z_extent = glm::cross(y_extent, x_extent); //--check the sign of this.
-        m_x_vector = x_extent;
-        m_y_vector = y_extent;
-        m_normal = z_extent;
-
-        mat4x4 matrix(
-            x_extent.x, x_extent.y, x_extent.z, 0,
-            y_extent.x, y_extent.y, y_extent.z, 0,
-            z_extent.x, z_extent.y, z_extent.z, 0,
-            position.x, position.y, position.z, 1
-        );
-        set_transform(Transform(matrix));
-
-        m_width = width;
-        m_height = height;
+    PrimitiveList() {
+        primitives = std::vector<Primitive *>(0);
+        world_bound = BoundingBox();
     }
-    bool intersect(Ray &ray, LocalGeometry *geom);
+    PrimitiveList(std::vector<Primitive *> _primitives) {
+        primitives = _primitives;
+        world_bound = BoundingBox();
+    }
+    Primitive *add(Primitive *primitive);
+    int length() const { return primitives.size(); }
 
-    inline Vector normal() const { return m_normal; }
-    // x and y internal basis vectors of the plane.
-    inline Vector x_vector() const { return m_x_vector; }
-    inline Vector y_vector() const { return m_y_vector; }
+    // Aggregate-Primitive interface implementations.
+    BoundingBox world_bound();
+    virtual bool intersect(Ray &ray, LocalGeometry *info);
+    virtual bool does_intersect(Ray &ray);
+private:
+    std::vector<Primitive *> primitives;
 };
 
-#endif // PRIMITIVES_PLANE_H
-
-
-
-#endif // PRIMITIVES_AGGREGATES_LIST_H
+#endif // PRIMITIVES_AGGREGATES_PRIMITIVELIST_H

@@ -116,17 +116,31 @@ std::ostream &operator<<(std::ostream &os, const Ray &ray);
 /*================================================================================
     A BoundingBox is axis-aligned in some space (the geometric object doesn't
     neccessarily bound something, but it is called this because that what it is for).
+
+    There is an "algebra of bounding boxes", with the "union" (called enlarge, since
+    union is a keyword and its not a set union) of two bounding boxes (or a bounding box
+    and a point, treated as a bounding box).
+
+    This is made more natural by making the default constructor give an "empty box", which
+    cannot just be a degenerate point. This is done by making it not have correctly ordered corners,
+    the min being the maximum possible values of each coordinate, the max being the minimum.
+    This means that in unions/enlargments with other bounding boxes, this will
+    act as the "identity box".
 ================================================================================*/
 struct BoundingBox {
     BoundingBox () {
-        min_corner = Point(-INFINITY,-INFINITY,-INFINITY);
-        max_corner = Point(INFINITY,INFINITY,INFINITY);
+        // Return the "identity box"
+        min_corner = Point(INFINITY,INFINITY,INFINITY);
+        max_corner = Point(-INFINITY,-INFINITY,-INFINITY);
     }
     BoundingBox (const Point &p) {
+        // Return the minimum box around the point p.
         min_corner = p;
         max_corner = p;
     }
     BoundingBox (const Point &p1, const Point &p2) {
+        // Return the minimum box around p1 and p2.
+        // It is not assumed that each coordinate of p1 and p2 is correctly ordered.
         min_corner = Point(min(p1.x, p2.x), min(p1.y, p2.y), min(p1.z, p2.z));
         max_corner = Point(max(p1.x, p2.x), max(p1.y, p2.y), max(p1.z, p2.z));
     }
@@ -145,6 +159,7 @@ struct BoundingBox {
     }
 
     // Methods to minimally enlarge the box to contain other objects.
+    // (the "algebra of bounding boxes")
     inline BoundingBox enlarge(const BoundingBox &other_box) {
         min_corner.x = fmin(min_corner.x, other_box.min_corner.x);
         min_corner.y = fmin(min_corner.y, other_box.min_corner.y);
