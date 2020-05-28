@@ -1,7 +1,6 @@
 #ifndef SCENE_H
 #define SCENE_H
-#include <vector>
-#include "mathematics.hpp"
+#include "core.hpp"
 #include "illumination.hpp"
 #include "primitives.hpp"
 #include "aggregates.hpp"

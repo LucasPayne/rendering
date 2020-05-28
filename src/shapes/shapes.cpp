@@ -1,5 +1,3 @@
-#include <iostream>
-#include "mathematics.hpp"
 #include "shapes.hpp"
 
 // The default world-space bounding box is the bounding box of the transformed object-space

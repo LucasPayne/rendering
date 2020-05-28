@@ -62,10 +62,8 @@ build/imaging/camera.o: src/imaging/camera.cpp src/imaging/camera.hpp
 build/imaging/framebuffer.o: src/imaging/framebuffer.cpp src/imaging/framebuffer.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)
 
-build/illumination.o: build/illumination/color.o build/illumination/light.o build/illumination/point_light.o
+build/illumination.o: build/illumination/light.o build/illumination/point_light.o
 	ld -relocatable -o $@ $^
-build/illumination/color.o: src/illumination/color.cpp src/illumination/color.hpp
-	$(CC) -c $< -o $@ $(CFLAGS)
 build/illumination/light.o: src/illumination/light.cpp src/illumination/light.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)
 build/illumination/point_light.o: src/illumination/point_light.cpp src/illumination/point_light.hpp
@@ -91,9 +89,7 @@ build/gl/gl_shader_program.o: src/gl/gl_shader_program.cpp src/gl/gl_shader_prog
 build/gl/gl_input.o: src/gl/gl_input.cpp src/gl/gl_input.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)
 
-build/interaction.o: build/interaction/input.o build/interaction/player.o
+build/interaction.o: build/interaction/player.o
 	ld -relocatable -o $@ $^
 build/interaction/player.o: src/interaction/player.cpp src/interaction/player.hpp
-	$(CC) -c $< -o $@ $(CFLAGS)
-build/interaction/input.o: src/interaction/input.cpp src/interaction/input.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)

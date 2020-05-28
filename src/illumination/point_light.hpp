@@ -1,7 +1,6 @@
 #ifndef ILLUMINATION_POINT_LIGHT
 #define ILLUMINATION_POINT_LIGHT
-#include "mathematics.hpp"
-#include "illumination/color.hpp"
+#include "primitives.hpp"
 
 class PointLight : public Light {
 private:

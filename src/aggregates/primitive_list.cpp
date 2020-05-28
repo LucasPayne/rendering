@@ -1,8 +1,4 @@
-#include "primitives.hpp"
 #include "aggregates/primitive_list.hpp"
-#include <vector>
-#include <iostream>
-#include <stdlib.h>
 
 Primitive *PrimitiveList::add(Primitive *primitive)
 {

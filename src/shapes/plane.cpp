@@ -1,9 +1,6 @@
 /*--------------------------------------------------------------------------------
     Plane primitive.
 --------------------------------------------------------------------------------*/
-#include <math.h>
-#include <glm/glm.hpp>
-#include "mathematics.hpp"
 #include "shapes.hpp"
 
 Plane::Plane(Point position, Vector x_extent, Vector y_extent, float width, float height)

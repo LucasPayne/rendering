@@ -1,5 +1,4 @@
-#include <GLFW/glfw3.h>
-#include "gl/gl_input.hpp"
+#include "gl.hpp"
 
 // Must be in the same order as the SpecialKeys enum is declared.
 static GLint GLFW_SPECIAL_KEY_MAP[NUM_SPECIAL_KEYS] = {

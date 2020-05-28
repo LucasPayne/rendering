@@ -7,19 +7,7 @@
             note: Should extend this interface to allow for a coroutine-like call for scene/camera updates, for animation.
         main_program(Renderer *), which does anything with the renderer (probably renders the scene to a file or views it).
 --------------------------------------------------------------------------------*/
-// C++ includes.
-#include <iostream>
-#include <fstream>
-#include <vector>
-#include <string>
-// C-style includes.
-#include <math.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-// Project includes.
-#include "core.hpp"
+#include "ray_tracer.hpp"
 
 //================================================================================
 /*--------------------------------------------------------------------------------

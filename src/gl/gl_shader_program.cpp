@@ -1,10 +1,4 @@
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-#include <string>
-#include <iostream>
-#include <fstream>
-#include <stdio.h>
-#include "gl/gl_shader_program.hpp"
+#include "gl.hpp"
 
 // Load a shader.
 GLShader::GLShader(GLenum shader_type, std::string const &shader_path)

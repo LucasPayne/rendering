@@ -1,8 +1,6 @@
 /*--------------------------------------------------------------------------------
     Sphere primitive.
 --------------------------------------------------------------------------------*/
-#include <math.h>
-#include "mathematics.hpp"
 #include "shapes.hpp"
 
 bool Sphere::intersect(Ray &in_ray, LocalGeometry *geom) const

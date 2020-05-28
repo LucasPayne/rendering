@@ -1,8 +1,5 @@
-#include "core.hpp"
+#include "ray_tracer.hpp"
 #include "gl.hpp"
-#include <math.h>
-#include <string>
-
 
 Player *g_player;
 

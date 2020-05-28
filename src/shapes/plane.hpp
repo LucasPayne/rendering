@@ -1,6 +1,5 @@
 #ifndef PRIMITIVES_PLANE_H
 #define PRIMITIVES_PLANE_H
-#include <glm/glm.hpp>
 #include "shapes.hpp"
 
 class Plane : public Shape {

@@ -1,7 +1,6 @@
 #ifndef MATHEMATICS_NUMERICS_H
 #define MATHEMATICS_NUMERICS_H
-#include <iostream>
-#include <string.h>
+#include "core.hpp"
 
 struct Vec {
     // n x 1 column vector.

@@ -1,9 +1,7 @@
 /*
 Write the rendered image straight to a file.
 */
-#include "core.hpp"
-#include <string>
-#include <string.h>
+#include "ray_tracer.hpp"
 
 void main_program(int argc, char *argv[], Renderer *renderer)
 {

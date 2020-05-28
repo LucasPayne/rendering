@@ -1,6 +1,5 @@
 #ifndef ILLUMINATION_LIGHT_H
 #define ILLUMINATION_LIGHT_H
-#include "illumination/color.hpp"
 #include "primitives.hpp"
 
 /*--------------------------------------------------------------------------------

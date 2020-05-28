@@ -1,7 +1,4 @@
-#include "core.hpp" //--- this dependence might be avoided somehow.
 #include "gl.hpp"
-#include <iostream>
-#include <stdio.h>
 
 float total_time;
 float dt;

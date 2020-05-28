@@ -1,9 +1,6 @@
 #ifndef GL_GL_TEXTURE_H
 #define GL_GL_TEXTURE_H
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
 #include "imaging/framebuffer.hpp"
-#include <stdint.h>
 
 class GLTexture {
 private:

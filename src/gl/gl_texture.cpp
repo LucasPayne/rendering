@@ -1,7 +1,4 @@
-#include "imaging/framebuffer.hpp"
-#include "gl/gl_texture.hpp"
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+#include "gl.hpp"
 
 GLTexture::GLTexture(FrameBuffer &fb, bool linear)
 {

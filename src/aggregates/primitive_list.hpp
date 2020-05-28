@@ -1,6 +1,5 @@
 #ifndef PRIMITIVES_AGGREGATES_PRIMITIVELIST_H
 #define PRIMITIVES_AGGREGATES_PRIMITIVELIST_H
-#include <vector>
 #include "primitives.hpp"
 
 /*--------------------------------------------------------------------------------

@@ -1,7 +1,5 @@
-#include "mathematics.hpp"
-#include "primitives.hpp"
 #include "light.hpp"
-#include "scene.hpp"
+#include "primitives.hpp"
 
 // Test if this ray (or ray segment) intersects a primitive.
 // Most likely this will be the scene or possibly some other aggregate primitive.

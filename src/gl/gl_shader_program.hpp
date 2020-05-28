@@ -1,8 +1,5 @@
 #ifndef GL_GL_SHADER_PROGRAM_H
 #define GL_GL_SHADER_PROGRAM_H
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-#include <string>
 
 class GLShader {
 private:

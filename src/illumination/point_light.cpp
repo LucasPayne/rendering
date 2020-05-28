@@ -1,6 +1,5 @@
 #include "illumination.hpp"
 #include "primitives.hpp"
-#include <glm/glm.hpp>
 
 Ray PointLight::light_ray(const LocalGeometry &geom)
 {

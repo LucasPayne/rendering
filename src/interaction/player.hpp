@@ -1,5 +1,7 @@
 #ifndef INTERACTION_PLAYER_H
 #define INTERACTION_PLAYER_H
+#include "core.hpp"
+#include "gl.hpp"
 #include "mathematics.hpp"
 
 enum FlyingModes {

@@ -1,6 +1,6 @@
 #ifndef SHAPES_H
 #define SHAPES_H
-#include <vector>
+#include "core.hpp"
 #include "mathematics.hpp"
 
 // Local "differential geometry" of a shape, given by Shape::intersect().

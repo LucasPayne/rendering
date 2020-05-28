@@ -1,13 +1,6 @@
 #ifndef GEOMETRY_H
 #define GEOMETRY_H
-#include <iostream>
-#include <glm/glm.hpp>
-#include <math.h>
-
-// Some geometric classes wrap a glm implementation.
-typedef glm::vec3 vec3;
-typedef glm::vec4 vec4;
-typedef glm::mat4x4 mat4x4;
+#include "core.hpp"
 
 // Print a glm::mat4x4.
 std::ostream &operator<<(std::ostream &os, const mat4x4 &m);
@@ -17,7 +10,6 @@ std::ostream &operator<<(std::ostream &os, const mat4x4 &m);
 -
     This is currently just the glm vec3.
 ================================================================================*/
-typedef vec3 Vector;
 // Print a Vector.
 std::ostream &operator<<(std::ostream &os, const Vector &vector);
 

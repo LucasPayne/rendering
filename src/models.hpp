@@ -1,11 +1,7 @@
 #ifndef MODELS_H
 #define MODELS_H
-#include "mathematics.hpp"
+#include "core.hpp"
 #include "primitives.hpp"
-#include "illumination/color.hpp"
-#include <string>
-#include <vector>
-#include <stdint.h>
 
 // Model with a mesh, vertex attributes (UV coordinates, normals).
 struct Model {

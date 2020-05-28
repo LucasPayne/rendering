@@ -1,7 +1,6 @@
 #ifndef PRIMITIVES_H
 #define PRIMITIVES_H
-#include <vector>
-#include "mathematics.hpp"
+#include "core.hpp"
 #include "shapes.hpp"
 
 /*--------------------------------------------------------------------------------

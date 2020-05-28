@@ -1,11 +1,6 @@
 #ifndef CORE_TRANSFORM_H
 #define CORE_TRANSFORM_H
-#include <iostream>
-#include <cmath>
-#include <glm/glm.hpp>
-typedef glm::vec3 vec3;
-typedef glm::vec4 vec4;
-typedef glm::mat4x4 mat4x4;
+#include "core.hpp"
 #include "mathematics/geometry.hpp"
 
 /*================================================================================

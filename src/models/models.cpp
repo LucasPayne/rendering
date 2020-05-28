@@ -1,11 +1,4 @@
-#include "mathematics.hpp"
-#include "primitives.hpp"
 #include "models.hpp"
-#include <string>
-#include <string.h>
-#include <stdio.h>
-#include <iostream>
-#include <fstream>
 
 // Read OFF models with triangle faces. Comments are allowed.
 // -

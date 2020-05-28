@@ -1,10 +1,9 @@
 #ifndef GL_CORE_H
 #define GL_CORE_H
+// Everything using the OpenGL/GLFW classes should include this.
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <string>
-#include <vector>
-
+#include "core.hpp"
 
 // The active OpenGLContext updates these global values.
 // This is for convenience, so that having things with time-dependence doesn't require
@@ -16,6 +15,16 @@ typedef void (*KeyCallback)(int key, int action);
 typedef void (*CursorPositionCallback)(double x, double y);
 typedef void (*MouseButtonCallback)(int button, int action);
 typedef void (*ReshapeCallback)(int width, int height);
+
+class InputListener {
+private:
+public:
+    bool listening;
+    virtual void key_callback(int key, int action) {}
+    virtual void cursor_position_callback(double x, double y) {}
+    virtual void cursor_move_callback(double x, double y) {}
+    virtual void mouse_button_callback(int button, int action) {}
+};
 
 // A Looper can encpasulate its own data, so is a sort of parameterized function.
 // The OpenGLContext holds a list of these.

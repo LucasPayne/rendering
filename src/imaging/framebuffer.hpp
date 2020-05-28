@@ -1,9 +1,6 @@
 #ifndef IMAGING_FRAMEBUFFER_H
 #define IMAGING_FRAMEBUFFER_H
-#include "illumination.hpp"
-#include <vector>
-#include <string>
-#include <iostream>
+#include "core.hpp"
 
 class FrameBuffer {
 private:

@@ -1,7 +1,6 @@
 #ifndef RENDERER_H
 #define RENDERER_H
-#include <vector>
-#include <string>
+#include "core.hpp"
 #include "imaging.hpp"
 #include "scene.hpp"
 
