@@ -19,8 +19,9 @@ struct PrimitiveInfo {
 };
 struct Node;
 struct Node {
-    Node(int _first_primitive, int _num_primitives) {
+    Node(BoundingBox &_box, int _first_primitive, int _num_primitives) {
         // Construct a leaf node (referencing a range of primitives).
+        box = _box;
         first_primitive = _first_primitive;
         num_primitives = _num_primitives;
         children[0] = children[1] = NULL;
@@ -60,7 +61,11 @@ static Node *BVH_create_node(vector<PrimitiveInfo> &p_infos,
     static int max_num_primitives_in_leaf = 1;
     if (num_primitives <= max_num_primitives_in_leaf) {
         // Leaf node.
-        return new Node(first_primitive, num_primitives);
+        BoundingBox p_box = p_infos[first_primitive].box;
+        for (int i = first_primitive+1; i < first_primitive + num_primitives; i++) {
+            p_box.enlarge(p_box.enlarge(p_infos[i].box));
+        }
+        return new Node(p_box, first_primitive, num_primitives);
     }
 
     // bvh heuristic: Split across the dimension with the greatest extents of centroids of primitive bounding volumes.
@@ -94,7 +99,6 @@ static Node *BVH_create_node(vector<PrimitiveInfo> &p_infos,
     Node *child_1 = BVH_create_node(p_infos, first_primitive, mid - first_primitive);
     Node *child_2 = BVH_create_node(p_infos, mid, first_primitive+num_primitives - mid);
     return new Node(mid, child_1, child_2);
-                         
 }
 
 // Debugging
@@ -151,13 +155,13 @@ BoundingBox BVH::world_bound() const
 
 static void recursive_intersect(const BVH *bvh, Ray &ray, Node *node, LocalGeometry *info, bool *any)
 {
-    if (!node->box.intersect(ray)) return;
     bool is_leaf = node->children[0] == NULL;
     if (is_leaf) {
         for (int i = node->first_primitive; i < node->first_primitive+node->num_primitives; i++) {
             if (bvh->temp_p_infos[i].primitive->intersect(ray, info)) *any = true;
         }
     } else {
+        if (!node->box.intersect(ray)) return;
         recursive_intersect(bvh, ray, node->children[0], info, any);
         recursive_intersect(bvh, ray, node->children[1], info, any);
     }

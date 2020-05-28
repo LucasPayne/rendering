@@ -39,7 +39,6 @@ Scene *make_scene() {
 
     scene->add_light(new PointLight(Point(0,30,0), 700.f*RGB(0.6,0.6,0.9)));
 
-
     // scene->add_light(new PointLight(Point(0,4,0), 20.f*RGB(0.6,0.6,0.9)));
     // scene->add_light(new PointLight(Point(-3,1,0), 20.f*RGB(1,0.6,0.5)));
 
