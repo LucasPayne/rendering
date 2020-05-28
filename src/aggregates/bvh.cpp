@@ -6,45 +6,49 @@
 #include <algorithm>
 
 struct PrimitiveInfo {
-    PrimitiveInfo(const Primitive *primitive) {
-        box = primitive->world_bound();
+    PrimitiveInfo(Primitive *_primitive) {
+        box = _primitive->world_bound();
         // Converting to a Vector here since Point arithmetic is a bit restrictive.
         centroid = 0.5f*Vector(box.min_corner.x,box.min_corner.y,box.min_corner.z) +
                    0.5f*Vector(box.max_corner.x,box.max_corner.y,box.max_corner.z);
+        primitive = _primitive;
     }
     BoundingBox box;
     Vector centroid;
+    Primitive *primitive;
 };
+struct Node;
 struct Node {
-    Node(int _first_primitive, int _num_primitives) :
+    Node(int _first_primitive, int _num_primitives) {
         // Construct a leaf node (referencing a range of primitives).
-        first_primitive{_first_primitive},
-        num_primitives{_num_primitives}
-    {
+        first_primitive = _first_primitive;
+        num_primitives = _num_primitives;
         children[0] = children[1] = NULL;
     }
-    Node(Node *child_1, Node *child_2) {
+    Node(int _mid, Node *child_1, Node *child_2) {
         // Construct a branching node.
         children[0] = child_1;
-        children[1] = child_1;
+        children[1] = child_2;
         box = enlarged(child_1->box, child_2->box);
+        mid = mid;
     }
-
     BoundingBox box; // Bound this sub-BVH. 
     Node *children[2]; // Branching nodes.
+    int mid; //---testing
     int first_primitive; // Leaf nodes.
     int num_primitives; // Leaf nodes.
 };
 
 // This acts as a "unary predicate" when passed to std::partition.
 struct Comparer {
-    Comparer(float _compare_to_value, int _splitting_dimension) :
-        compare_to_value{_compare_to_value},
-        splitting_dimension{_splitting_dimension}
-    {}
+    Comparer(float _compare_to_value, int _splitting_dimension) {
+        compare_to_value = _compare_to_value;
+        splitting_dimension = _splitting_dimension;
+    }
     float compare_to_value;
     int splitting_dimension;
     bool operator()(const PrimitiveInfo &primitive_info) const {
+        // printf("splitting along %d %.2f\n", splitting_dimension, compare_to_value);getchar();
         return primitive_info.centroid[splitting_dimension] <= compare_to_value;
     }
 };
@@ -60,7 +64,7 @@ static Node *BVH_create_node(vector<PrimitiveInfo> &p_infos,
     }
 
     // bvh heuristic: Split across the dimension with the greatest extents of centroids of primitive bounding volumes.
-    BoundingBox centroid_bounds; //--- default constructor?
+    BoundingBox centroid_bounds = BoundingBox();
     for (int i = first_primitive; i < first_primitive + num_primitives; i++) {
         centroid_bounds.enlarge(p_infos[i].centroid);
     }
@@ -87,10 +91,26 @@ static Node *BVH_create_node(vector<PrimitiveInfo> &p_infos,
                                                 Comparer(split_value, splitting_dimension));
     int mid = mid_pointer - &p_infos[0];
     
-    return new Node(BVH_create_node(p_infos, first_primitive, mid),
-                    BVH_create_node(p_infos, mid+1, mid+num_primitives));
+    Node *child_1 = BVH_create_node(p_infos, first_primitive, mid - first_primitive);
+    Node *child_2 = BVH_create_node(p_infos, mid, first_primitive+num_primitives - mid);
+    return new Node(mid, child_1, child_2);
+                         
 }
 
+// Debugging
+static void print_node(Node *node, int depth = 0)
+{
+    // getchar();
+    for (int i = 0; i < depth; i++) printf("  ");
+    bool is_leaf = node->children[0] == NULL;
+    if (is_leaf) {
+        printf("first: %d, n: %d\n", node->first_primitive, node->num_primitives);
+    } else {
+        printf("split %d:\n", node->mid);
+        print_node(node->children[0], depth + 1);
+        print_node(node->children[1], depth + 1);
+    }
+}
 
 BVH::BVH(const vector<Primitive *> &primitives)
 {
@@ -116,17 +136,48 @@ BVH::BVH(const vector<Primitive *> &primitives)
     // While recurring, the array is being rearranged so that nodes only need to hold ranges.
 
     Node *root = BVH_create_node(p_infos, 0, primitives.size());
+
+    print_node(root);
+
+    temp_root = root;
+    temp_p_infos = p_infos;
 }
 
 BoundingBox BVH::world_bound() const
 {
-    return BoundingBox();
+    //---make this actually be the bound of the root node.
+    return BoundingBox(Point(-INFINITY,-INFINITY,-INFINITY), Point(INFINITY, INFINITY, INFINITY));
 }
+
+static void recursive_intersect(const BVH *bvh, Ray &ray, Node *node, LocalGeometry *info, bool *any)
+{
+    if (!node->box.intersect(ray)) return;
+    bool is_leaf = node->children[0] == NULL;
+    if (is_leaf) {
+        for (int i = node->first_primitive; i < node->first_primitive+node->num_primitives; i++) {
+            if (bvh->temp_p_infos[i].primitive->intersect(ray, info)) *any = true;
+        }
+    } else {
+        recursive_intersect(bvh, ray, node->children[0], info, any);
+        recursive_intersect(bvh, ray, node->children[1], info, any);
+    }
+}
+
 bool BVH::intersect(Ray &ray, LocalGeometry *info) const
 {
-    return false;
+    bool any = false;
+    LocalGeometry info_p;
+    recursive_intersect(this, ray, temp_root, &info_p, &any);
+
+    if (any) {
+        *info = info_p;
+        return true;
+    } else {
+        return false;
+    }
 }
 bool BVH::does_intersect(Ray &ray) const
 {
-    return false;
+    LocalGeometry geom;
+    return intersect(ray, &geom);
 }
