@@ -37,9 +37,11 @@ build/primitives/primitives.o: src/primitives/primitives.cpp src/primitives.hpp 
 	$(CC) -c $< -o $@ $(CFLAGS)
 
 
-build/aggregates.o: build/aggregates/primitive_list.o
+build/aggregates.o: build/aggregates/primitive_list.o build/aggregates/bvh.o
 	ld -relocatable -o $@ $^
 build/aggregates/primitive_list.o: src/aggregates/primitive_list.cpp src/aggregates/primitive_list.hpp src/primitives.hpp src/aggregates.hpp
+	$(CC) -c $< -o $@ $(CFLAGS)
+build/aggregates/bvh.o: src/aggregates/bvh.cpp src/aggregates/bvh.hpp src/primitives.hpp src/aggregates.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)
 
 build/shapes.o: build/shapes/shapes.o build/shapes/sphere.o build/shapes/plane.o

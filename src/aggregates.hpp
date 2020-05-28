@@ -3,5 +3,6 @@
 // Collection file. Include this to include all acceleration structures.
 
 #include "aggregates/primitive_list.hpp"
+#include "aggregates/bvh.hpp"
 
 #endif // AGGREGATES_H
