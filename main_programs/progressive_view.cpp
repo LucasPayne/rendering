@@ -308,7 +308,14 @@ void main_program(int argc, char *argv[], Renderer *renderer)
 {
     OpenGLContext context = framebuffer_viewer_context(renderer, "Progressive view");
 
-    g_player = new Player(0,0,0, 0,0, 3);
+    //---unsure if this angle extraction is correct.
+    Point camera_pos = renderer->camera->camera_to_world(Point(0,0,0));
+    Vector camera_right = renderer->camera->camera_to_world(Vector(1,0,0));
+    Vector camera_up = renderer->camera->camera_to_world(Vector(0,1,0));
+    float azimuth = atan2(camera_right.z, camera_right.x);
+    float altitude = atan2(camera_up.y, glm::dot(camera_up, glm::cross(camera_right, Vector(0,1,0))));
+    g_player = new Player(camera_pos.x,camera_pos.y,camera_pos.z, azimuth,0, 3);
+
     g_player->look_with_mouse = false;
     g_player->listening = true;
     context.add_input_listener(g_player);

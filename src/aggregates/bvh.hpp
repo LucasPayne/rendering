@@ -36,6 +36,7 @@ public:
     vector<PrimitiveInfo> uncompacted_p_infos;
 #endif
 private:
+    BoundingBox m_box; // Bounds all the internal primitives (this is the same as the bounding box of the root node).
     vector<Primitive *> primitives;
     vector<BVHNode> compacted;
 };

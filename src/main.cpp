@@ -9,6 +9,13 @@
 --------------------------------------------------------------------------------*/
 #include "ray_tracer.hpp"
 
+
+static void prerender_tests(Renderer *renderer)
+{
+    // A place to put random testing stuff, like printouts, before the render.
+    // (Should be empty if nothing is being checked/tested).
+}
+
 //================================================================================
 /*--------------------------------------------------------------------------------
     This function is implemented by a linked program, procedurally describing the
@@ -64,6 +71,8 @@ int main(int argc, char *argv[])
             }
         }
     }
+    std::cout << "System specs:\n";
+    std::cout << "    num cores: " << num_system_cores() << "\n";
 
     float caz = cos(camera_azimuth);
     float saz = sin(camera_azimuth);
@@ -87,6 +96,8 @@ int main(int argc, char *argv[])
     Renderer *renderer = new Renderer(scene, camera, horizontal_pixels, supersampling_width);
     renderer->print_properties();
     std::cout << "------------------------------------------------------\n";
+
+    prerender_tests(renderer);
 
     // Pass the arguments after -- (optional) to the linked program. This is so
     // arguments don't clash between renderer settings and whatever the linked program does.

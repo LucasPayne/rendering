@@ -206,9 +206,11 @@ BVH::BVH(const vector<Primitive *> &_primitives)
     #if NO_COMPACTIFY
     uncompacted_root = root;
     uncompacted_p_infos = p_infos;
+    m_box = root->box;
     #else
     compacted = vector<BVHNode>(tree_size);
     BVH_compactify(root, compacted);
+    m_box = root->box;
     BVH_delete_node(root);
     // print_compacted(compacted);
     // getchar();
@@ -217,8 +219,7 @@ BVH::BVH(const vector<Primitive *> &_primitives)
 
 BoundingBox BVH::world_bound() const
 {
-    //---make this actually be the bound of the root node.
-    return BoundingBox(Point(-INFINITY,-INFINITY,-INFINITY), Point(INFINITY, INFINITY, INFINITY));
+    return m_box;
 }
 
 

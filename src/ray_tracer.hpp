@@ -17,5 +17,7 @@
 #include "renderer.hpp"
 
 #include "interaction.hpp"
+#include <thread>
+#include "multithreading.hpp"
 
 #endif // RAY_TRACER_H

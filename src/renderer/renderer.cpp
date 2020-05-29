@@ -1,4 +1,5 @@
 #include "renderer.hpp"
+#include "multithreading.hpp"
 
 // Trace a ray through the primitive (probably the scene itself,
 // but since the scene is a primitive, why not allow this to be any primitive).
