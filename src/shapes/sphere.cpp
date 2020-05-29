@@ -14,7 +14,7 @@ bool Sphere::intersect(Ray &in_ray, LocalGeometry *geom) const
     float discriminant = b*b - 4*a*c;
     if (discriminant < 0) return false;
     float sqrt_d = sqrt(discriminant);
-    float inv_2a = 1.0 / 2*a;
+    float inv_2a = 1.0 / (2*a);
     float t = (-b - sqrt_d)*inv_2a;
     if (t < ray.min_t || t > ray.max_t) {
         t = (-b + sqrt_d)*inv_2a;
