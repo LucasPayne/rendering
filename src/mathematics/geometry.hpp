@@ -122,29 +122,29 @@ std::ostream &operator<<(std::ostream &os, const Ray &ray);
 struct BoundingBox {
     BoundingBox () {
         // Return the "identity box"
-        min_corner = Point(INFINITY,INFINITY,INFINITY);
-        max_corner = Point(-INFINITY,-INFINITY,-INFINITY);
+        corners[0] = Point(INFINITY,INFINITY,INFINITY);
+        corners[1] = Point(-INFINITY,-INFINITY,-INFINITY);
     }
     BoundingBox (const Point &p) {
         // Return the minimum box around the point p.
-        min_corner = p;
-        max_corner = p;
+        corners[0] = p;
+        corners[1] = p;
     }
     BoundingBox (const Point &p1, const Point &p2) {
         // Return the minimum box around p1 and p2.
         // It is not assumed that each coordinate of p1 and p2 is correctly ordered.
-        min_corner = Point(fmin(p1.x, p2.x), fmin(p1.y, p2.y), fmin(p1.z, p2.z));
-        max_corner = Point(fmax(p1.x, p2.x), fmax(p1.y, p2.y), fmax(p1.z, p2.z));
+        corners[0] = Point(fmin(p1.x, p2.x), fmin(p1.y, p2.y), fmin(p1.z, p2.z));
+        corners[1] = Point(fmax(p1.x, p2.x), fmax(p1.y, p2.y), fmax(p1.z, p2.z));
     }
 
-    // The box corners are indexable.
+    // The box corners are indexable (all 8 of them).
     inline Point operator[](int index) const {
         #define greatest_x ((index) & 1)
         #define greatest_y (((index) >> 1) & 1)
         #define greatest_z (((index) >> 2) & 1)
-        return Point(greatest_x ? max_corner.x : min_corner.x,
-                     greatest_y ? max_corner.y : min_corner.y,
-                     greatest_z ? max_corner.z : min_corner.z);
+        return Point(greatest_x ? corners[1].x : corners[0].x,
+                     greatest_y ? corners[1].y : corners[0].y,
+                     greatest_z ? corners[1].z : corners[0].z);
         #undef greatest_x
         #undef greatest_y
         #undef greatest_z
@@ -153,20 +153,20 @@ struct BoundingBox {
     // Methods to minimally enlarge the box to contain other objects.
     // (the "algebra of bounding boxes")
     inline BoundingBox enlarge(const BoundingBox &other_box) {
-        min_corner.x = fmin(min_corner.x, other_box.min_corner.x);
-        min_corner.y = fmin(min_corner.y, other_box.min_corner.y);
-        min_corner.z = fmin(min_corner.z, other_box.min_corner.z);
-        max_corner.x = fmax(max_corner.x, other_box.max_corner.x);
-        max_corner.y = fmax(max_corner.y, other_box.max_corner.y);
-        max_corner.z = fmax(max_corner.z, other_box.max_corner.z);
+        corners[0].x = fmin(corners[0].x, other_box.corners[0].x);
+        corners[0].y = fmin(corners[0].y, other_box.corners[0].y);
+        corners[0].z = fmin(corners[0].z, other_box.corners[0].z);
+        corners[1].x = fmax(corners[1].x, other_box.corners[1].x);
+        corners[1].y = fmax(corners[1].y, other_box.corners[1].y);
+        corners[1].z = fmax(corners[1].z, other_box.corners[1].z);
     }
     inline BoundingBox enlarge(const Point &encase_point) {
-        min_corner.x = fmin(min_corner.x, encase_point.x);
-        min_corner.y = fmin(min_corner.y, encase_point.y);
-        min_corner.z = fmin(min_corner.z, encase_point.z);
-        max_corner.x = fmax(max_corner.x, encase_point.x);
-        max_corner.y = fmax(max_corner.y, encase_point.y);
-        max_corner.z = fmax(max_corner.z, encase_point.z);
+        corners[0].x = fmin(corners[0].x, encase_point.x);
+        corners[0].y = fmin(corners[0].y, encase_point.y);
+        corners[0].z = fmin(corners[0].z, encase_point.z);
+        corners[1].x = fmax(corners[1].x, encase_point.x);
+        corners[1].y = fmax(corners[1].y, encase_point.y);
+        corners[1].z = fmax(corners[1].z, encase_point.z);
     }
     // These friend methods construct a new box instead of editing in-place.
     friend BoundingBox enlarged(const BoundingBox &box, const BoundingBox &other_box);
@@ -178,9 +178,11 @@ struct BoundingBox {
     //  intersects with the box.)
     bool intersect(const Ray &ray, float *t0, float *t1) const;
     bool intersect(const Ray &ray) const;
+    
+    Point corners[2]; // min, max
 
-    Point min_corner;
-    Point max_corner;
+    inline Point min_corner() const { return corners[0]; };
+    inline Point max_corner() const { return corners[1]; };
 };
 // Print a BoundingBox.
 std::ostream &operator<<(std::ostream &os, const BoundingBox &box);

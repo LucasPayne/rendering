@@ -6,8 +6,7 @@ Scene *make_scene() {
     vector<Primitive *> primitives(0);
 
 
-    //int n = 3;
-    int n = 1;
+    int n = 10;
     for (int I = -n; I <= n; I++) {
         for (int J = -n; J <= n; J++) {
             for (int K = 0; K < 10; K++) {
@@ -37,7 +36,7 @@ Scene *make_scene() {
 
     // scene->add_primitive(new GeometricPrimitive(new Sphere(Transform::translate(0,20,0), 4)));
 
-    scene->add_light(new PointLight(Point(0,30,0), 700.f*RGB(0.6,0.6,0.9)));
+    scene->add_light(new PointLight(Point(0,60,0), 3500.f*RGB(0.6,0.6,0.9)));
 
     // scene->add_light(new PointLight(Point(0,4,0), 20.f*RGB(0.6,0.6,0.9)));
     // scene->add_light(new PointLight(Point(-3,1,0), 20.f*RGB(1,0.6,0.5)));

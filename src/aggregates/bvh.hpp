@@ -2,8 +2,25 @@
 #define PRIMITIVE_AGGREGATE_BVH_H
 #include "primitives.hpp"
 
-struct Node; //---temporary
-struct PrimitiveInfo;  //---temporary
+// Set this flag if a non-compacted (linked tree structure, probably inefficient) data structure is wanted.
+// This is so I can benchmark and see how much better the compacted data structure is.
+#define NO_COMPACTIFY 0
+
+#if NO_COMPACTIFY
+struct Node;
+struct PrimitiveInfo;
+#endif
+
+struct BVHNode {
+    BVHNode() {}
+    BoundingBox box; //size: 6 floats, 24 bytes
+    union {
+        uint32_t primitives_offset;
+        uint32_t second_child_offset;
+    };
+    uint8_t num_primitives;
+    uint8_t __pad[3];
+};
 
 class BVH : public Aggregate {
 public:
@@ -14,10 +31,13 @@ public:
     bool intersect(Ray &ray, LocalGeometry *info) const;
     bool does_intersect(Ray &ray) const;
 
-
-    Node *temp_root; //---temporary
-    vector<PrimitiveInfo> temp_p_infos; //---temporary
+#if NO_COMPACTIFY
+    Node *uncompacted_root;
+    vector<PrimitiveInfo> uncompacted_p_infos;
+#endif
 private:
+    vector<Primitive *> primitives;
+    vector<BVHNode> compacted;
 };
 
 #endif // PRIMITIVE_AGGREGATE_BVH_H
