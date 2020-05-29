@@ -261,7 +261,7 @@ bool BVH::does_intersect(Ray &ray) const
 // such as precomputations for ray-bounding box intersections.
 
 
-inline bool intersect_box(const BVHNode &node, const Ray &ray, const Vector &inv_d, const int is_negative[3])
+static inline bool intersect_box(const BVHNode &node, const Ray &ray, const Vector &inv_d, const int is_negative[3])
 {
     // Optimized function used for box tests in the BVH.
     // Check box intersection.
@@ -300,57 +300,46 @@ inline bool intersect_box(const BVHNode &node, const Ray &ray, const Vector &inv
 
 bool BVH::intersect(Ray &ray, LocalGeometry *out_geom) const
 {
-    int index = 0;
-    int todo_length = 0;
-    static uint32_t __todo[64];
-    static uint32_t *todo = __todo + 1;
-    #define add_todo(INDEX) {\
-        todo[todo_length++] = ( INDEX );\
-    }
-    #define pop_todo() {\
-        index = todo[--todo_length];\
-    }
-    add_todo(0);
-    bool any_intersection = false;
-    LocalGeometry geom;
-    while (todo_length >= 0) {
-        if (compacted[index].num_primitives == 0) {
-            // This is a branching node.
-            if (compacted[index].box.intersect(ray)) { //--replace these with more optimized ray-box checks.
-                add_todo(compacted[index].second_child_offset);
-                index ++;
-            } else {
-                pop_todo();
-            }
-        } else {
-            // This is a leaf node.
-            int n = compacted[index].primitives_offset+compacted[index].num_primitives;
-            for (int i = compacted[index].primitives_offset;
-                     i < n;
-                     i++) {
-                if (primitives[i]->intersect(ray, &geom)) {
-                    any_intersection = true;
-                }
-            }
-	    pop_todo();
-        }
-    }
-    if (any_intersection) {
-        *out_geom = geom;
-        return true;
-    } else {
-        return false;
-    }
-}
-bool BVH::does_intersect(Ray &ray) const
-{
-#if 1
     // Precomputations
     Vector inv_d(1.f / ray.d.x, 1.f / ray.d.y, 1.f / ray.d.z);
     Point origin = ray(ray.min_t);
     int is_negative[3] = { ray.d.x < 0, ray.d.y < 0, ray.d.z < 0 };
 
     bool any_intersection = false;
+    uint32_t todo[64];
+    int todo_now = 0;
+    todo[0] = 0;
+    int index = 0;
+    do {
+        if (intersect_box(compacted[index], ray, inv_d, is_negative)) {
+            if (compacted[index].num_primitives == 0) {
+                // Branching node.
+                todo_now ++;
+                todo[todo_now] = compacted[index].second_child_offset;
+                index ++;
+            } else {
+                // Leaf node.
+                int n = compacted[index].primitives_offset+compacted[index].num_primitives;
+                for (int i = compacted[index].primitives_offset;
+                         i < n;
+                         i++) {
+                    if (primitives[i]->intersect(ray, out_geom)) any_intersection = true;
+                }
+                index = todo[todo_now--];
+            }
+        } else {
+            index = todo[todo_now--];
+        }
+    } while (todo_now >= 0);
+    return any_intersection;
+}
+bool BVH::does_intersect(Ray &ray) const
+{
+    // Precomputations
+    Vector inv_d(1.f / ray.d.x, 1.f / ray.d.y, 1.f / ray.d.z);
+    Point origin = ray(ray.min_t);
+    int is_negative[3] = { ray.d.x < 0, ray.d.y < 0, ray.d.z < 0 };
+
     uint32_t todo[64];
     int todo_now = 0;
     todo[0] = 0;
@@ -376,43 +365,6 @@ bool BVH::does_intersect(Ray &ray) const
             index = todo[todo_now--];
         }
     } while (todo_now >= 0);
-
-    return any_intersection;
-
-
-#else
-    int index = 0;
-    int todo_length = 0;
-    static uint32_t __todo[64];
-    static uint32_t *todo = __todo + 1;
-    #define add_todo(INDEX) {\
-        todo[todo_length++] = ( INDEX );\
-    }
-    #define pop_todo() {\
-        index = todo[--todo_length];\
-    }
-    add_todo(0);
-    while (todo_length >= 0) {
-        if (compacted[index].num_primitives == 0) {
-            // This is a branching node.
-            if (compacted[index].box.intersect(ray)) { //--replace these with more optimized ray-box checks.
-                add_todo(compacted[index].second_child_offset);
-                index ++;
-            } else {
-                pop_todo();
-            }
-        } else {
-            // This is a leaf node.
-            int n = compacted[index].primitives_offset+compacted[index].num_primitives;
-            for (int i = compacted[index].primitives_offset;
-                     i < n;
-                     i++) {
-                if (primitives[i]->does_intersect(ray)) return true;
-            }
-	    pop_todo();
-        }
-    }
     return false;
-#endif
 }
 #endif // NO_COMPACTIFY
