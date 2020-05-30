@@ -66,8 +66,14 @@ public:
     bool intersect(Ray &ray, LocalGeometry *geom) const;
     bool does_intersect(Ray &ray) const;
     BoundingBox object_bound() const;
-private:
+
+    // This is a specialized data structure, processed after using the usual BVH constructor on the mesh.
+    // There is then specific BVH traversal code for using this specialized data structure.
+    // (hopefully so mesh intersection is faster.)
     vector<TriangleNode> triangles_bvh;
+    BoundingBox m_world_bound;
+    int triangles_bvh_length;
+private:
 };
 
 #endif // PRIMITIVES_TRIANGLE_MESH_H

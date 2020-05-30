@@ -107,22 +107,6 @@ BoundingBox MeshTriangle::object_bound() const
 }
 
 
-bool TriangleMesh::does_intersect(Ray &ray) const
-{
-    return false;
-    // return bvh->does_intersect(ray);
-}
-bool TriangleMesh::intersect(Ray &ray, LocalGeometry *geom) const
-{
-    return false;
-    // return bvh->intersect(ray, geom);
-}
-BoundingBox TriangleMesh::object_bound() const
-{
-    return BoundingBox();
-    // return bvh->world_bound();
-}
-
 static void flatten_to_triangles_bvh_recur(const BVH &bvh, vector<TriangleNode> &trinodes,
 				           Node *node,
                                            int *trinodes_index)
@@ -167,6 +151,208 @@ static void bvh_unravelled_length_recur(Node *node, int *length)
     }
 }
 
+
+static inline bool intersect_box(const TriangleNode &node, const Ray &ray, const Vector &inv_d, const int is_negative[3])
+{
+    // Optimized function used for box tests in the BVH.
+    // Check box intersection.
+    float t0x, t1x, t0y, t1y, t0z, t1z;
+    // X
+    t0x = (node.box.corners[is_negative[0]].x - ray.o.x) * inv_d.x;
+    t1x = (node.box.corners[1-is_negative[0]].x - ray.o.x) * inv_d.x;
+    // Y
+    t0y = (node.box.corners[is_negative[1]].y - ray.o.y) * inv_d.y;
+    t1y = (node.box.corners[1-is_negative[1]].y - ray.o.y) * inv_d.y;
+    if (t0x > t1y || t0y > t1x) {
+        // No intersection, the X and Y interval intersection is degenerate.
+        return false;
+    }
+    // Take the intersection of the interval. (t0x,t1x are now used as the whole box interval).
+    if (t0y > t0x) t0x = t0y;
+    if (t1y < t1x) t1x = t1y;
+    // Z
+    t0z = (node.box.corners[is_negative[2]].z - ray.o.z) * inv_d.z;
+    t1z = (node.box.corners[1-is_negative[2]].z - ray.o.z) * inv_d.z;
+    if (t0x > t1z || t0z > t1x) {
+        // No intersection, the box interval is degenerate.
+        return false;
+    }
+    // Take the intersection again. Now t0x,t1x is the interval of the ray's line intersecting the box.
+    if (t0z > t0x) t0x = t0z;
+    if (t1z < t1x) t1x = t1z;
+    // Check if the intersection with the ray segment is degenerate.
+    if (t0x > ray.max_t || t1x < ray.min_t) {
+        // If either of these is true then the intersection must be degenerate. The converse is also true.
+        return false;
+    }
+    return true;
+}
+
+
+
+static inline bool triangle_intersect(const TriangleMesh *mesh,
+                                      const Point &a, const Point &b, const Point &c,
+                                      uint16_t index_a, uint16_t index_b, uint16_t index_c, 
+                                      Ray &ray, LocalGeometry *geom)
+{
+    Vector n = glm::cross(c-a, b-a);
+    float denom = glm::dot(ray.d, n);
+    const float epsilon = 1e-4;
+    if (fabs(denom) < epsilon) {
+        // The ray is almost parallel to the triangle.
+        return false;
+    }
+    float t = -glm::dot(ray.o - a, n)/denom;
+    if (t < ray.min_t || t > ray.max_t) return false;
+    Point p = ray(t);
+
+    float wa = glm::dot(ray.d, glm::cross(b-ray.o, c-ray.o));
+    float wb = glm::dot(ray.d, glm::cross(c-ray.o, a-ray.o));
+    float wc = glm::dot(ray.d, glm::cross(a-ray.o, b-ray.o));
+    if (((wa > 0) != (wb > 0)) || ((wb > 0) != (wc > 0))) return false;
+    float winv = 1.0 / (wa + wb + wc);
+    wa *= winv;
+    wb *= winv;
+    wc *= winv;
+
+    ray.max_t = t;
+    if (mesh->model->has_normals) {
+        // Compute a shading normal instead.
+        Vector &na = mesh->model->normals[index_a];
+        Vector &nb = mesh->model->normals[index_b];
+        Vector &nc = mesh->model->normals[index_c];
+        geom->n = wa*na + wb*nb + wc*nc; // normalizing here seems to be expensive. Will this be good enough?
+    } else {
+        geom->n = n; // no normalize, do that in triangles_bvh_intersect.
+    }
+    geom->p = p;
+    return true;
+}
+
+static inline bool triangle_does_intersect(const TriangleMesh *mesh,
+                                           const Point &a, const Point &b, const Point &c,
+                                           Ray &ray)
+{
+    Vector n = glm::cross(c-a, b-a);
+    float denom = glm::dot(ray.d, n);
+    const float epsilon = 1e-4;
+    if (fabs(denom) < epsilon) {
+        // The ray is almost parallel to the triangle.
+        return false;
+    }
+    float t = -glm::dot(ray.o - a, n)/denom;
+    if (t < ray.min_t || t > ray.max_t) return false;
+    Point p = ray(t);
+
+    float wa = glm::dot(ray.d, glm::cross(b-ray.o, c-ray.o));
+    float wb = glm::dot(ray.d, glm::cross(c-ray.o, a-ray.o));
+    float wc = glm::dot(ray.d, glm::cross(a-ray.o, b-ray.o));
+    return (((wa > 0) == (wb > 0)) && ((wb > 0) == (wc > 0)));
+}
+static inline bool triangles_bvh_intersect(const TriangleMesh *mesh, const vector<TriangleNode> &triangles_bvh, Ray &ray, LocalGeometry *geom)
+{
+    // Precomputations
+    Vector inv_d(1.f / ray.d.x, 1.f / ray.d.y, 1.f / ray.d.z);
+    Point origin = ray(ray.min_t);
+    int is_negative[3] = { ray.d.x < 0, ray.d.y < 0, ray.d.z < 0 };
+
+    bool any_intersection = false;
+    uint32_t todo[128];
+    int todo_now = 0;
+    todo[0] = 0;
+    int index = 0;
+    do {
+        if (intersect_box(triangles_bvh[index], ray, inv_d, is_negative)) {
+            if (triangles_bvh[index].next_shift == 0) {
+                // Leaf node.
+                do {
+                    // Intersect with the triangles in this leaf.
+                    uint16_t index_a = triangles_bvh[index].a;
+                    uint16_t index_b = triangles_bvh[index].b;
+                    uint16_t index_c = triangles_bvh[index].c;
+                    Point a,b,c;
+                    a = mesh->model->vertices[index_a];
+                    b = mesh->model->vertices[index_b];
+                    c = mesh->model->vertices[index_c];
+                    if (triangle_intersect(mesh, a, b, c, index_a, index_b, index_c, ray, geom)) any_intersection = true;
+                    index ++;
+                    // Either the loop terminates at the end of the array or when a branching node is reached.
+                } while (index < mesh->triangles_bvh_length && triangles_bvh[index].next_shift == 0);
+                
+                index = todo[todo_now--];
+            } else {
+                // Branching node.
+                todo_now ++;
+                todo[todo_now] = index + triangles_bvh[index].next_shift;
+                // Due to the unravelled order, the next node is the first primitive of the first child.
+                index ++;
+            }
+        } else {
+            index = todo[todo_now--];
+        }
+    } while (todo_now >= 0);
+    if (any_intersection) {
+        geom->shape = mesh;
+        // geom->n = glm::normalize(geom->n);
+    }
+    return any_intersection;
+}
+static inline bool triangles_bvh_does_intersect(const TriangleMesh *mesh, const vector<TriangleNode> &triangles_bvh, Ray &ray)
+{
+    // Precomputations
+    Vector inv_d(1.f / ray.d.x, 1.f / ray.d.y, 1.f / ray.d.z);
+    Point origin = ray(ray.min_t);
+    int is_negative[3] = { ray.d.x < 0, ray.d.y < 0, ray.d.z < 0 };
+
+    uint32_t todo[128];
+    int todo_now = 0;
+    todo[0] = 0;
+    int index = 0;
+    do {
+        if (intersect_box(triangles_bvh[index], ray, inv_d, is_negative)) {
+            if (triangles_bvh[index].next_shift == 0) {
+                // Leaf node.
+                do {
+                    // Intersect with the triangles in this leaf.
+                    Point &a = mesh->model->vertices[triangles_bvh[index].a];
+                    Point &b = mesh->model->vertices[triangles_bvh[index].b];
+                    Point &c = mesh->model->vertices[triangles_bvh[index].c];
+                    if (triangle_does_intersect(mesh, a, b, c, ray)) return true;
+                    index ++;
+                    // Either the loop terminates at the end of the array or when a branching node is reached.
+                } while (index < mesh->triangles_bvh_length && triangles_bvh[index].next_shift == 0);
+                
+                index = todo[todo_now--];
+            } else {
+                // Branching node.
+                todo_now ++;
+                todo[todo_now] = index + triangles_bvh[index].next_shift;
+                // Due to the unravelled order, the next node is the first primitive of the first child.
+                index ++;
+            }
+        } else {
+            index = todo[todo_now--];
+        }
+    } while (todo_now >= 0);
+    return false;
+}
+
+bool TriangleMesh::intersect(Ray &ray, LocalGeometry *geom) const
+{
+    return triangles_bvh_intersect(this, triangles_bvh, ray, geom);
+}
+bool TriangleMesh::does_intersect(Ray &ray) const
+{
+    return triangles_bvh_does_intersect(this, triangles_bvh, ray);
+    // //---specialize this.
+    // LocalGeometry geom;
+    // return intersect(ray, &geom);
+}
+BoundingBox TriangleMesh::object_bound() const
+{
+    return m_world_bound;
+}
+
 TriangleMesh::TriangleMesh(const Transform &o2w, Model *_model)
 {
     // Copy and transform the model into world space.
@@ -195,14 +381,12 @@ TriangleMesh::TriangleMesh(const Transform &o2w, Model *_model)
     triangles_bvh = vector<TriangleNode>(unravelled_length);
     printf("flattened: %d\n", bvh.flattened_length());
     printf("unravelled: %d\n", unravelled_length);
+    triangles_bvh_length = unravelled_length;
 
     printf("Flattening to triangles ...\n");
     flatten_to_triangles_bvh(bvh, triangles_bvh);
     printf("Flattened!\n");
+    m_world_bound = bvh.world_bound();
     
-    // Now, make a specific structure for triangles.
-    // int bvh_length = bvh.flattened_length();
-    // triangles_bvh = vector<TriangleNode>(bvh_length, true); //set a flag to tell the BVH constructor to keep the tree data structure.
-    // int index = 0;
-    // flatten_to_triangles_bvh(bvh->uncompacted_root, &index); // Recur over the BVH tree.
+    //----Destroy the bvh!
 }
