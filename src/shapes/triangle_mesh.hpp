@@ -21,9 +21,11 @@ public:
     BoundingBox object_bound() const;
 
     MeshTriangle() {}
-    MeshTriangle(TriangleMesh *_mesh, uint16_t *_indices)
+    MeshTriangle(TriangleMesh *_mesh, int ta, int tb, int tc)
     {
-        for (int i = 0; i < 3; i++) indices[i] = _indices[i];
+        indices[0] = ta;
+        indices[1] = tb;
+        indices[2] = tc;
         mesh = _mesh;
 
         // Form the bounding box around the three vertices.

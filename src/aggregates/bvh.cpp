@@ -84,6 +84,20 @@ static Node *BVH_create_node(vector<PrimitiveInfo> &p_infos,
     }
     Vector min_corner(centroid_bounds.corners[0].x, centroid_bounds.corners[0].y, centroid_bounds.corners[0].z);
     Vector max_corner(centroid_bounds.corners[1].x, centroid_bounds.corners[1].y, centroid_bounds.corners[1].z);
+
+    const float stop_below_centroid_extents = 0.0001f;
+    if (   max_corner.x - min_corner.x < stop_below_centroid_extents
+        && max_corner.y - min_corner.y < stop_below_centroid_extents
+        && max_corner.z - min_corner.z < stop_below_centroid_extents) {
+        // Put all remaining primitives in a box.
+        BoundingBox p_box = p_infos[first_primitive].box;
+        for (int i = first_primitive+1; i < first_primitive + num_primitives; i++) {
+            p_box.enlarge(p_box.enlarge(p_infos[i].box));
+        }
+        return new Node(p_box, first_primitive, num_primitives);
+    }
+
+
     // Compute the dimension of greatest extent (x:0, y:1, z:2).
     float max_extent = max_corner[0] - min_corner[0];
     int splitting_dimension = 0;
@@ -312,7 +326,7 @@ bool BVH::intersect(Ray &ray, LocalGeometry *out_geom) const
     int is_negative[3] = { ray.d.x < 0, ray.d.y < 0, ray.d.z < 0 };
 
     bool any_intersection = false;
-    uint32_t todo[64];
+    uint32_t todo[128];
     int todo_now = 0;
     todo[0] = 0;
     int index = 0;
@@ -346,7 +360,7 @@ bool BVH::does_intersect(Ray &ray) const
     Point origin = ray(ray.min_t);
     int is_negative[3] = { ray.d.x < 0, ray.d.y < 0, ray.d.z < 0 };
 
-    uint32_t todo[64];
+    uint32_t todo[128];
     int todo_now = 0;
     todo[0] = 0;
     int index = 0;

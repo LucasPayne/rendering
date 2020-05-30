@@ -4,6 +4,7 @@ Scene *make_scene() {
     Scene *scene = new Scene();
     vector<Primitive *> primitives(0);
 
+#if 1
     float r = 20;
     int n = 300;
     for (int i = 0; i < n; i++) {
@@ -15,8 +16,21 @@ Scene *make_scene() {
     scene->add_light(new PointLight(Point(0,30,0), 700.f*RGB(0.6,0.6,0.9)));
 
 
-    Model *bunny = load_OFF_model("models/icosahedron.off");
-    primitives.push_back(new GeometricPrimitive(new TriangleMesh(Transform::translate(0,0,0), bunny)));
+    Model *apple = load_OFF_model("models/apple.off", 30, Point(0,0,0), true);
+    float R = 7;
+    for (int i = 0; i < 8; i++) {
+    primitives.push_back(new GeometricPrimitive(
+                         new TriangleMesh(Transform::translate(frand()*R,frand()*R,frand()*R),
+                         apple)));
+    }
+#endif
+    scene->add_light(new PointLight(Point(-3,5,0), 20.f*RGB(0.6,0.956,0.43)));
+    scene->add_light(new PointLight(Point(3,4,2), 16.f*RGB(0.5,0.5,1)));
+
+    Model *bunny = load_OFF_model("models/bunny.off", 1, Point(0,1,0), true);
+    primitives.push_back(new GeometricPrimitive(
+                         new TriangleMesh(Transform::translate(0,2,0),
+                         bunny)));
     
 
 #if 1

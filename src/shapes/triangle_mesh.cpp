@@ -16,10 +16,36 @@ Point MeshTriangle::c() const {
 
 bool MeshTriangle::intersect(Ray &ray, LocalGeometry *geom) const
 {
-    Vector n = glm::cross(b()-a(), c()-a());
+/*
+    // Following pbrt, page 140.
+    // Parameterizing the triangle in barycentric coordinates,
+    // form the equation
+    //    o + td = a(1-b1-b2) + b(b1) + c(b2).
+    // ~deaffine~ this by translating a to the origin,
+    // giving (o - a) + td = (b - a)b1 + (c - a)b2.
+    // This is a 3x3 linear system with three unknowns, so is readily solved with
+    // Cramer's rule.
+    Vector e1 = b() - a();
+    Vector e2 = c() - a();
+    Vector s1 = glm::cross(ray.d, e2);
+    Vector s2 = glm::cross(ray.d, e1);
+    float coeff = 1.0 / glm::dot(s1, e1);
+    float t = coeff * glm::dot(s2, e2);
+    float b1 = coeff * glm::dot(s2, ray.o - a());
+    float b2 = coeff * glm::dot(s2, ray.d);
+    if (b1 < 0 || b2 < 0 || b1 + b2 > 1) return false; // does not intersect the triangle.
+    Point p = ray(t);
+    ray.max_t = t;
+    geom->n = glm::cross(b()-a(), c()-a());
+    geom->p = p;
+    geom->shape = this;
+    return true;
+*/
+
+    Vector n = glm::cross(c()-a(), b()-a());
     float denom = glm::dot(ray.d, n);
     const float epsilon = 1e-4;
-    if (denom < epsilon) {
+    if (fabs(denom) < epsilon) {
         // The ray is almost parallel to the triangle.
         return false;
     }
@@ -27,12 +53,22 @@ bool MeshTriangle::intersect(Ray &ray, LocalGeometry *geom) const
     if (t < ray.min_t || t > ray.max_t) return false;
     Point p = ray(t);
 
-    // Test if the point is on the same side of each edge.
-    bool mid_side_test = glm::dot(p-b(),c()-b()) < 0;
-    if (   glm::dot(p-a(),b()-a()) < 0 != mid_side_test
-        || glm::dot(p-c(),a()-c()) < 0 != mid_side_test) return false;
+    float wa = glm::dot(ray.d, glm::cross(b()-ray.o, c()-ray.o));
+    float wb = glm::dot(ray.d, glm::cross(c()-ray.o, a()-ray.o));
+    float wc = glm::dot(ray.d, glm::cross(a()-ray.o, b()-ray.o));
+    if (((wa > 0) != (wb > 0)) || ((wb > 0) != (wc > 0))) return false;
+    float winv = 1.0 / (wa + wb + wc);
+    wa *= winv;
+    wb *= winv;
+    wc *= winv;
 
-    geom->n = glm::normalize(n);
+    ray.max_t = t;
+    if (mesh->model->has_normals) {
+        // Compute a shading normal instead.
+        // return glm::normalize(wa*na + wb*nb + wc*nc);
+    } else {
+        geom->n = glm::normalize(n);
+    }
     geom->p = p;
     geom->shape = this;
     return true;
@@ -45,6 +81,9 @@ static inline bool barycentric_triangle_convex(float wa, float wb, float wc)
 }
 bool MeshTriangle::does_intersect(Ray &ray) const
 {
+    LocalGeometry geom;
+    return intersect(ray, &geom);
+#if 0
     float wa = glm::dot(ray.d, glm::cross(b()-ray.o, c()-ray.o));
     float wb = glm::dot(ray.d, glm::cross(c()-ray.o, a()-ray.o));
     float wc = glm::dot(ray.d, glm::cross(a()-ray.o, b()-ray.o));
@@ -57,6 +96,7 @@ bool MeshTriangle::does_intersect(Ray &ray) const
     float d = glm::dot(p - ray.o, ray.d);
     if (d < ray.min_t*ray.min_t || d > ray.max_t*ray.max_t) return false;
     return true;
+#endif
 }
 BoundingBox MeshTriangle::object_bound() const
 {
@@ -83,8 +123,8 @@ TriangleMesh::TriangleMesh(const Transform &o2w, Model *_model)
     // This can save a lot of ray transformations.
     std::cout << "Creating triangle mesh\n";
     
-    model = _model;
-    // model = _model->copy();
+    // model = _model;
+    model = _model->copy();
     std::cout << "Copied\n";
     model->transform_by(o2w);
     std::cout << "Transformed\n";
@@ -94,7 +134,7 @@ TriangleMesh::TriangleMesh(const Transform &o2w, Model *_model)
     triangle_pointers = vector<Primitive *>(model->num_triangles);
     
     for (int i = 0; i < model->num_triangles; i++) {
-        triangles[i] = MeshTriangle(this, &model->triangles[3*i]);
+        triangles[i] = MeshTriangle(this, model->triangles[3*i], model->triangles[3*i+1], model->triangles[3*i+2]);
         geometric_triangles[i] = GeometricPrimitive(&triangles[i]);
         triangle_pointers[i] = &geometric_triangles[i];
     }

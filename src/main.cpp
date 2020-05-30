@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
         like supersampling, etc.), and write that to images, provide downsampled framebuffers
         to routines for viewing, etc. The renderer acts as a server to the main program, and provides callbacks.
         
-        For example, a program which just opens a window and shows a single rendered frame
+        For example, a program which just opens a window and shows a single rendered frame.
     ----
         Main program
         Linked scene:
