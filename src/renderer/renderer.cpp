@@ -71,6 +71,49 @@ void Renderer::write_to_ppm(std::string const &filename)
 // This render function is intended for just rendering an image in one pass.
 RenderingState Renderer::render_direct(RenderingState state)
 {
+#if 1
+    int width = pixels_x();
+    int height = pixels_y();
+    const int tile_size = 16;
+    int tiles_x = (width + tile_size - 1) / tile_size; // This arithmetic works out, allowing the divide to count one over,
+                                                       // with the -1 to handle the case where the extent is divided perfectly.
+    int tiles_y = (height + tile_size - 1) / tile_size;
+
+    Vector camera_right_extent = camera->imaging_plane_width() * camera->camera_to_world(Vector(1,0,0));
+    Vector camera_down_extent = camera->imaging_plane_height() * camera->camera_to_world(Vector(0,-1,0));
+    Point origin = camera->position();
+    Vector shifted_camera_top_left = camera->lens_point(0,1) - origin;
+
+    for (int tile_i = 0; tile_i < tiles_x; tile_i++) {
+        for (int tile_j = 0; tile_j < tiles_y; tile_j++) {
+            //--^ Parallelizable for-loop over tiles.
+            // Compute the subblock this tile corresponds to (avoiding stepping over the target extents).
+            // x over [x0, x1)
+            // y over [y0, y1)
+            int x0 = tile_size * tile_i;
+            int x1 = min(width, tile_size * (tile_i + 1));
+            int y0 = tile_size * tile_j;
+            int y1 = min(height, tile_size * (tile_j + 1));
+
+            // Loop over the pixels (this is supposed to be non-parallel).
+            for (int i = x0; i < x1; i++) {
+                for (int j = y0; j < y1; j++) {
+                    // Generate the ray.
+	            float x = pixels_x_inv() * i;
+	            float y = pixels_y_inv() * j;
+                    Ray ray(origin, shifted_camera_top_left + x*camera_right_extent + y*camera_down_extent);
+
+                    // Ray trace.
+                    RGB color = ray_trace(ray, scene, scene);
+
+                    // Update the pixel color.
+                    set_pixel(i, j, color);
+                }
+            }
+        }
+    }
+    return RenderingState(0,0,true);
+#else
     // Initialize values used to generate rays.
     int width = pixels_x();
     int height = pixels_y();
@@ -103,6 +146,7 @@ RenderingState Renderer::render_direct(RenderingState state)
         if (rendering_should_yield != NULL && rendering_should_yield()) yielding = true;
     }
     return RenderingState(0,0,true);
+#endif
 }
 
 // This render function is intended for interactive rendering, where a lower-quality image is shown while moving,

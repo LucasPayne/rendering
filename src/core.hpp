@@ -7,6 +7,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <algorithm>
+using std::min;
+using std::max;
 #include <string>
 using std::string;
 #include <vector>

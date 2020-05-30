@@ -1,0 +1,63 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+
+\usepackage[top=1in, bottom=1.25in, left=1.25in, right=1.25in]{geometry}
+
+\newcommand{\mtwotwo}[4]{\begin{bmatrix} #1 & #3 \\ #2 & #4 \end{bmatrix}}
+\newcommand{\br}[1]{\left\{#1\right\}}
+\newcommand{\brkt}[1]{\left[#1\right]}
+\newcommand{\prn}[1]{\left(#1\right)}
+\newcommand{\reals}{\mathbb{R}}
+\newcommand{\cyc}[1]{\mathbb{Z}_{#1}}
+\newcommand{\ints}{\mathbb{Z}}
+\newcommand{\rationals}{\mathbb{Q}}
+\newcommand{\lcm}{\text{lcm}}
+\newcommand{\galois}[1]{\mathbb{F}_{#1}}
+
+\begin{document}
+\title{COSC363 -- Assignment 2 -- Ray tracing}
+\author{Lucas Payne --- 73231707}
+\date{}
+\maketitle
+\vskip -0.2in
+\hrule
+\vskip 0.03in
+\hrule
+\vskip 0.2in
+
+\newcommand{\thing}[3]{
+\vskip 0.2in
+\hrule
+\vskip 0.03in
+\hrule
+\vskip 0.1in
+    \textbf{\textit{#3 #1}}:
+#2
+\vskip 0.1in
+\hrule
+\vskip 0.03in
+\hrule
+\vskip 0.2in
+}
+\newcommand{\feature}[2]{\thing{#1}{#2}{Feature}}
+\newcommand{\leadin}[2]{
+    \textit{#1}
+    \vskip 0.1in
+    \hrule
+    \vskip 0.08in
+    #2
+    \vskip 0.6cm
+}
+
+Features
+\begin{enumerate}
+\item Interactive rendering with lower quality while moving (flying mouse-controllable interface).
+\item Acceleration with bounding volume heirarchies.
+\item Parallelism - multiple worker threads are spawned to work on tasks, the rendering of small tiles of the image.
+\end{enumerate}
+
+
+\end{document}
+

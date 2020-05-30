@@ -179,7 +179,7 @@ void FrameBufferViewerLoop::direct_view_loop() {
     //    As long as the image is being rendered, the logic of this loop is a free-for-all
     //    attempt to make the image being synthesized kind of look good while still or moving.
     rendering_state = renderer->render_direct(rendering_state);
-    if (!rendering_state.done) renderer->downsample_to_framebuffer(&downsampled_framebuffer);
+    renderer->downsample_to_framebuffer(&downsampled_framebuffer);
 
     shader_program.bind();
     glUniform1i(uniform_location_image, 0);
