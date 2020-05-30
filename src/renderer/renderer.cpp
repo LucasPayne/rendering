@@ -89,7 +89,7 @@ RenderingState Renderer::render_direct(RenderingState state)
     // notes on syntax:
     //    [&](...){} is a lambda function where [&] denotes having everything in the current scope available in the body by reference.
     //
-    parallel_for_2D([&](int tile_i, int tile_j){
+    parallel_for_2D([&](int tile_i, int tile_j, int thread_index){
        //--^ Parallelizable for-loop over tiles.
        // Compute the subblock this tile corresponds to (avoiding stepping over the target extents).
        // x over [x0, x1)

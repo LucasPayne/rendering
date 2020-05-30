@@ -1,6 +1,10 @@
 #include "multithreading.hpp"
 // note: This is not supposed to be any sort of general multithreading module.
 // Multithreading is primarily for tiled rendering.
+//
+// I have used pbrt v3's parallelism implementation as reference and to learn how to use
+// C++ parallelism.
+// https://github.com/mmp/pbrt-v3/blob/9f717d847a807793fa966cf0eaa366852efef167/src/core/parallel.cpp
 
 static vector<std::thread> threads;
 static bool threads_initialized = false;
@@ -9,10 +13,10 @@ static bool threads_initialized = false;
 // running a thread a few extra times before detecting this doesn't matter.
 static bool threads_should_terminate = false;
 
-// "Work" is over a grid of indices and a function that takes a function of index pairs.
+// "Work" is over a grid of indices and and evaluates a function of index pairs.
 // This is because this is really just for tiled rendering.
 struct Work {
-    Work(std::function<void(int,int)> _f, int _count_i, int _count_j) {
+    Work(std::function<void(int,int,int)> _f, int _count_i, int _count_j) {
         count_i = _count_i;
         count_j = _count_j;
         next_index_i = 0;
@@ -23,7 +27,7 @@ struct Work {
     }
     int next_index_i;
     int next_index_j;
-    std::function<void(int,int)> f;
+    std::function<void(int,int,int)> f; // i,j,thread_index
     int count_i;
     int count_j;
     int active_workers;
@@ -35,7 +39,7 @@ struct Work {
         return next_index_i < count_i;
     }
 
-    // !!! A the work mutex must be held when calling this !!!
+    // !!! The work mutex must be held when calling this !!!
     void step() {
         next_index_j ++;
         if (next_index_j == count_j) {
@@ -106,9 +110,9 @@ Any thread that intends to wait on std::condition_variable has to
           three steps above
 --------------------------------------------------------------------------------*/
 
-static void worker_thread()
+static void worker_thread(int thread_index)
 {
-    std::cout << "Spawned worker thread\n";
+    std::cout << "Spawned worker thread " << thread_index << "\n";
 
     // Spawned threads start here.
     // They simply wait for work on the task list, and if there is any work available, they do it.
@@ -145,7 +149,7 @@ static void worker_thread()
             
             // Release the mutex, then do the work.
             lock.unlock();
-            my_work->f(index_i, index_j);
+            my_work->f(index_i, index_j, thread_index);
             // Afterward, halt and request access to the mutex again.
             lock.lock();
             
@@ -159,11 +163,14 @@ static void worker_thread()
             }
         }
     }
-    std::cout << "Closed worker thread\n";
+    std::cout << "Closed worker thread " << thread_index << "\n";
 }
 
-void parallel_for_2D(std::function<void(int,int)> f, const int &count_i, const int &count_j)
+void parallel_for_2D(std::function<void(int,int,int)> f, const int &count_i, const int &count_j, bool use_main_thread)
 {
+    // If the main thread is not being used, and there there are worker threads, the main thread context returns to the caller.
+    // It is the caller's job to do 
+
     check_init();
     // Create tasks for each of (i,j) for i:[0,count_i), j:[0,count_j).
     // The worker threads will then grab them from the task stack.
@@ -180,7 +187,7 @@ void parallel_for_2D(std::function<void(int,int)> f, const int &count_i, const i
         // and just doing this each time, and comparing).
         for (int i = 0; i < count_i; i++) {
             for (int j = 0; j < count_j; j++) {
-                f(i, j);
+                f(i, j, 0);
             }
         }
         return;
@@ -205,33 +212,37 @@ lock_guard is destructed and the mutex is released.  The lock_guard class is non
     }
     std::unique_lock<std::mutex> lock(work_mutex);
     // Start the other threads.
-    // work_condition_variable.notify_all();
 
-    while (work != NULL && !work->finished()) {
-        // printf("GOING!\n");getchar();
+    if (use_main_thread) {
         // Help out.
-        // This thread holds the work mutex.
-        int index_i = work->next_index_i;
-        int index_j = work->next_index_j;
-        // The next task is the next cell in the grid.
-        work->step();
-        Work *my_work = work;
-        if (!work->work_available()) {
-            work = NULL;
+        while (work != NULL && !work->finished()) {
+            // printf("GOING!\n");getchar();
+            // This thread holds the work mutex.
+            int index_i = work->next_index_i;
+            int index_j = work->next_index_j;
+            // The next task is the next cell in the grid.
+            work->step();
+            Work *my_work = work;
+            if (!work->work_available()) {
+                work = NULL;
+            }
+            my_work->active_workers ++;
+            
+            // Release the mutex, then do the work.
+            lock.unlock();
+            // This is the point where any worker thread can jump in and grab the lock.
+            my_work->f(index_i, index_j, 0);
+            // Afterward, halt and request access to the mutex again.
+            lock.lock();
+            
+            my_work->active_workers --;
         }
-        my_work->active_workers ++;
-        
-        // Release the mutex, then do the work.
-        lock.unlock();
-        // This is the point where any worker thread can jump in and grab the lock.
-        my_work->f(index_i, index_j);
-        // Afterward, halt and request access to the mutex again.
-        lock.lock();
-        
-        my_work->active_workers --;
+        // finished.
+        work = NULL;
+    } else {
+        work_condition_variable.notify_all();
+        // If not using the main thread, just return to caller.
     }
-    // finished.
-    work = NULL;
 }
 
 void init_multithreading(bool overriding, unsigned int override_num_threads)
@@ -249,7 +260,7 @@ void init_multithreading(bool overriding, unsigned int override_num_threads)
         num_threads = override_num_threads;
     }
     for (int i = 0; i < num_threads-1; i++) {
-        threads.push_back(std::thread(worker_thread));
+        threads.push_back(std::thread(worker_thread, i+1)); //i+1 is the thread index (0 stands for the main thread).
     }
     // Just let the threads go, do not wait on a barrier or anything.
 }
