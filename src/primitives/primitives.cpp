@@ -10,7 +10,7 @@ static void initialize_default_textures()
 }
 GeometricPrimitive::GeometricPrimitive(Shape *_shape,
 	                               Texture *_diffuse_texture,
-	                               Texture *_specular_texture)
+	                               Texture *_specular_texture, float _reflectiveness)
 {
     shape = _shape;
     if (_diffuse_texture == NULL) {
@@ -25,6 +25,7 @@ GeometricPrimitive::GeometricPrimitive(Shape *_shape,
     } else {
         specular_texture = _specular_texture;
     }
+    reflectiveness = _reflectiveness;
 }
 
 bool Primitive::intersect(Ray &ray, Intersection *inter) {

@@ -57,7 +57,7 @@ public:
     GeometricPrimitive() {}
     GeometricPrimitive(Shape *_shape,
                        Texture *_diffuse_texture = NULL,
-                       Texture *_specular_texture = NULL);
+                       Texture *_specular_texture = NULL, float reflectiveness = 0);
 
     // Pass on some routines to the underlying shape.
     virtual bool can_intersect() const { 
@@ -81,6 +81,7 @@ public:
     // All that is used currently is a basic Phong lighting model.
     Texture *diffuse_texture;
     Texture *specular_texture;
+    float reflectiveness;
 private:
 };
 

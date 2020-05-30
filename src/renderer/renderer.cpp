@@ -1,15 +1,11 @@
 #include "renderer.hpp"
 #include "multithreading.hpp"
 
-
-RGB incoming_radiance(GeometricPrimitive *primitive, Ray &ray, LocalGeometry &geom)
-{
-    return primitive->diffuse_texture->rgb_lookup(geom);
-}
+#define MAX_RECURSION 4
 
 // Trace a ray through the primitive (probably the scene itself,
 // but since the scene is a primitive, why not allow this to be any primitive).
-RGB ray_trace(Ray &ray, Scene *scene, Primitive *root_primitive)
+static RGB ray_trace(Ray &ray, Scene *scene, Primitive *root_primitive, int recursion_level = 0)
 {
     Intersection inter;
     if (root_primitive->intersect(ray, &inter)) {
@@ -32,7 +28,15 @@ RGB ray_trace(Ray &ray, Scene *scene, Primitive *root_primitive)
             }
         }
         // Modulate with the incoming radiance.
-        color *= incoming_radiance(hit_primitive, ray, geom);
+        float r = hit_primitive->reflectiveness;
+        RGB incoming_radiance = (1 - r) * hit_primitive->diffuse_texture->rgb_lookup(geom);
+        if (recursion_level < MAX_RECURSION && r > 0) {
+            Vector reflected_dir = ray.d - 2*glm::dot(ray.d, geom.n)*geom.n;
+            const float epsilon = 1e-3;
+            Ray reflected_ray(geom.p+epsilon*reflected_dir, reflected_dir);
+            incoming_radiance += r * ray_trace(reflected_ray, scene, root_primitive, recursion_level + 1);
+        }
+        color *= incoming_radiance;
         return color;
     } else {
         const RGB background_color(0.97, 0.7, 0.96);
@@ -83,7 +87,8 @@ void Renderer::render_direct()
 {
     int width = pixels_x();
     int height = pixels_y();
-    const int tile_size = 16;
+    //const int tile_size = 16;
+    const int tile_size = 32;
     int tiles_x = (width + tile_size - 1) / tile_size; // This arithmetic works out, allowing the divide to count one over,
                                                        // with the -1 to handle the case where the extent is divided perfectly.
     int tiles_y = (height + tile_size - 1) / tile_size;
