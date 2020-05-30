@@ -4,10 +4,12 @@
 #include <mutex>
 #include <condition_variable>
 #include <utility>
-#include <functional>
 #include "core.hpp"
 
 int num_system_cores();
-void init_multithreading();
+void init_multithreading(bool overriding = false, unsigned int override_num_threads = 1);
+void close_multithreading();
+
+void parallel_for_2D(std::function<void(int,int)> f, const int &count_i, const int &count_j);
 
 #endif // MULTITHREADING_H

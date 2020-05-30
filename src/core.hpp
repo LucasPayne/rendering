@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <algorithm>
+#include <functional>
 using std::min;
 using std::max;
 #include <string>

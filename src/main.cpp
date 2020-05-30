@@ -55,6 +55,8 @@ int main(int argc, char *argv[])
     Point camera_position(0,0,0);
     float camera_azimuth = 0;
     float camera_altitude = 0;
+    bool override_num_threads = false;
+    unsigned int num_threads; // only used if overridden.
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-r") == 0) {
             if (i+1 >= argc
@@ -69,6 +71,11 @@ int main(int argc, char *argv[])
                                                                    &camera_azimuth,&camera_altitude) == EOF) {
                 arg_error("-c must be followed by 5 comma-separated floats, for the position, azimuth, then altitude.\n");
             }
+        }
+        else if (strcmp(argv[i], "-p") == 0) {
+            if (i+1 >= argc
+                || sscanf(argv[i+1], "%u", &num_threads) == EOF) arg_error("-p must be followed by a valid number of threads.");
+            override_num_threads = true;
         }
     }
     std::cout << "System specs:\n";
@@ -114,6 +121,12 @@ int main(int argc, char *argv[])
             }
             break;
         }
+    }
+    if (override_num_threads) {
+        init_multithreading(true, num_threads);
+    } else {
+        // By default, probably use the number of system cores.
+        init_multithreading();
     }
     main_program(pass_argc, pass_argv, renderer);
 }

@@ -12,4 +12,5 @@ void main_program(int argc, char *argv[], Renderer *renderer)
     }
     renderer->render_direct();
     renderer->write_to_ppm(filename);
+    close_multithreading();
 }

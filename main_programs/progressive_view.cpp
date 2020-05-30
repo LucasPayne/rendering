@@ -140,6 +140,7 @@ public:
         if (action == GLFW_PRESS) {
             if (key == GLFW_KEY_Q) {
                 g_opengl_context->close();
+                close_multithreading();
                 exit(EXIT_SUCCESS);
             }
             if (key == GLFW_KEY_F) {
