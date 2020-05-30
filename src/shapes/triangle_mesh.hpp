@@ -6,6 +6,17 @@
 #include "models.hpp"
 #include "aggregates.hpp"
 
+struct TriangleNode {
+    BoundingBox box; // 6 floats, 24 bytes
+    uint16_t a;
+    uint16_t b;
+    uint16_t c;
+    uint16_t next_shift; //0 if this is a branch.
+    TriangleNode() {}
+};
+
+
+
 class TriangleMesh;
 
 // This class is specifically for a triangle of a mesh.
@@ -48,11 +59,6 @@ private:
 
 class TriangleMesh : public Shape {
 public:
-    BVH *bvh;
-    //..........
-    vector<MeshTriangle> triangles;
-    vector<GeometricPrimitive> geometric_triangles;
-    vector<Primitive *> triangle_pointers;
     Model *model;
 
     TriangleMesh(const Transform &o2w, Model *_model);
@@ -61,6 +67,7 @@ public:
     bool does_intersect(Ray &ray) const;
     BoundingBox object_bound() const;
 private:
+    vector<TriangleNode> triangles_bvh;
 };
 
 #endif // PRIMITIVES_TRIANGLE_MESH_H

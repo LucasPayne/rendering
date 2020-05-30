@@ -109,15 +109,62 @@ BoundingBox MeshTriangle::object_bound() const
 
 bool TriangleMesh::does_intersect(Ray &ray) const
 {
-    return bvh->does_intersect(ray);
+    return false;
+    // return bvh->does_intersect(ray);
 }
 bool TriangleMesh::intersect(Ray &ray, LocalGeometry *geom) const
 {
-    return bvh->intersect(ray, geom);
+    return false;
+    // return bvh->intersect(ray, geom);
 }
 BoundingBox TriangleMesh::object_bound() const
 {
-    return bvh->world_bound();
+    return BoundingBox();
+    // return bvh->world_bound();
+}
+
+static void flatten_to_triangles_bvh_recur(const BVH &bvh, vector<TriangleNode> &trinodes,
+				           Node *node,
+                                           int *trinodes_index)
+{
+    if (node->is_leaf()) {
+        for (int i = 0; i < node->num_primitives; i++) {
+            trinodes[*trinodes_index + i].box = node->box;
+            trinodes[*trinodes_index + i].next_shift = 0; // signify this is a leaf.
+            MeshTriangle *mtri = (MeshTriangle *) (((GeometricPrimitive *) bvh.primitives[node->first_primitive + i])->shape);
+            trinodes[*trinodes_index + i].a = mtri->indices[0];
+            trinodes[*trinodes_index + i].b = mtri->indices[1];
+            trinodes[*trinodes_index + i].c = mtri->indices[2];
+        }
+        (*trinodes_index) += node->num_primitives;
+    } else {
+        int this_node_index = *trinodes_index;
+        trinodes[this_node_index].box = node->box;
+        (*trinodes_index) ++;
+        flatten_to_triangles_bvh_recur(bvh, trinodes, node->children[0], trinodes_index);
+        int next_shift = *trinodes_index - this_node_index;
+        trinodes[this_node_index].next_shift = next_shift;
+        flatten_to_triangles_bvh_recur(bvh, trinodes, node->children[1], trinodes_index);
+    }
+}
+
+static void flatten_to_triangles_bvh(BVH &bvh, vector<TriangleNode> &trinodes)
+{
+    //note: Remember to initialize trinodes to the right size before passing it. No space will be made here.
+
+    int trinodes_index = 0;
+    flatten_to_triangles_bvh_recur(bvh, trinodes, bvh.uncompacted_root, &trinodes_index);
+}
+
+static void bvh_unravelled_length_recur(Node *node, int *length)
+{
+    if (node->is_leaf()) {
+        (*length) += node->num_primitives;
+    } else {
+        (*length) ++;
+        bvh_unravelled_length_recur(node->children[0], length);
+        bvh_unravelled_length_recur(node->children[1], length);
+    }
 }
 
 TriangleMesh::TriangleMesh(const Transform &o2w, Model *_model)
@@ -133,15 +180,29 @@ TriangleMesh::TriangleMesh(const Transform &o2w, Model *_model)
     std::cout << "Transformed\n";
 
     // Set up to use the usual code to create a BVH (don't want to duplicate that here).
-    triangles = vector<MeshTriangle>(model->num_triangles);
-    geometric_triangles = vector<GeometricPrimitive>(model->num_triangles);
-    triangle_pointers = vector<Primitive *>(model->num_triangles);
+    vector<MeshTriangle> triangles = vector<MeshTriangle>(model->num_triangles);
+    vector<GeometricPrimitive> geometric_triangles(model->num_triangles);
+    vector<Primitive *> triangle_pointers(model->num_triangles);
     for (int i = 0; i < model->num_triangles; i++) {
         triangles[i] = MeshTriangle(this, model->triangles[3*i], model->triangles[3*i+1], model->triangles[3*i+2]);
         geometric_triangles[i] = GeometricPrimitive(&triangles[i]);
         triangle_pointers[i] = &geometric_triangles[i];
     }
     // Construct a usual bounding volume heirarchy around the mesh triangles.
-    BVH bvh = BVH(triangle_pointers);
+    BVH bvh = BVH(triangle_pointers, true);
+    int unravelled_length = 0;
+    bvh_unravelled_length_recur(bvh.uncompacted_root, &unravelled_length);
+    triangles_bvh = vector<TriangleNode>(unravelled_length);
+    printf("flattened: %d\n", bvh.flattened_length());
+    printf("unravelled: %d\n", unravelled_length);
+
+    printf("Flattening to triangles ...\n");
+    flatten_to_triangles_bvh(bvh, triangles_bvh);
+    printf("Flattened!\n");
+    
     // Now, make a specific structure for triangles.
+    // int bvh_length = bvh.flattened_length();
+    // triangles_bvh = vector<TriangleNode>(bvh_length, true); //set a flag to tell the BVH constructor to keep the tree data structure.
+    // int index = 0;
+    // flatten_to_triangles_bvh(bvh->uncompacted_root, &index); // Recur over the BVH tree.
 }

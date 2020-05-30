@@ -17,30 +17,6 @@ struct PrimitiveInfo {
     Vector centroid;
     Primitive *primitive;
 };
-struct Node;
-
-struct Node {
-    Node(BoundingBox &_box, int _first_primitive, int _num_primitives) {
-        // Construct a leaf node (referencing a range of primitives).
-        box = _box;
-        first_primitive = _first_primitive;
-        num_primitives = _num_primitives;
-        children[0] = children[1] = NULL;
-    }
-    Node(int _mid, Node *child_1, Node *child_2) {
-        // Construct a branching node.
-        children[0] = child_1;
-        children[1] = child_2;
-        box = enlarged(child_1->box, child_2->box);
-        mid = mid;
-    }
-    BoundingBox box; // Bound this sub-BVH. 
-    Node *children[2]; // Branching nodes.
-    int mid; //---testing
-    int first_primitive; // Leaf nodes.
-    int num_primitives; // Leaf nodes.
-};
-#define IS_LEAF(NODE) (( NODE )->children[0] == NULL)
 
 // This acts as a "unary predicate" when passed to std::partition.
 struct Comparer {
@@ -186,7 +162,7 @@ static void BVH_compactify(Node *root, vector<BVHNode> &compacted)
     BVH_compactify_recur(compacted, root, 0);
 }
 
-BVH::BVH(const vector<Primitive *> &_primitives)
+BVH::BVH(const vector<Primitive *> &_primitives, bool keep_root)
 {
     // Compute a more compact, homogeneous array of primitive information.
     vector<PrimitiveInfo> p_infos;
@@ -223,14 +199,21 @@ BVH::BVH(const vector<Primitive *> &_primitives)
         primitives.push_back(info.primitive);
     }
     #if NO_COMPACTIFY
-    uncompacted_root = root;
     uncompacted_p_infos = p_infos;
     m_box = root->box;
+    uncompacted_root = root;
     #else
     compacted = vector<BVHNode>(tree_size);
     BVH_compactify(root, compacted);
     m_box = root->box;
-    BVH_delete_node(root);
+    if (keep_root) {
+        // special case use: BVHs are processed into another form to be more optimal for triangle meshes.
+        // The tree representation is more convenient to work on.
+        uncompacted_root = root;
+    } else {
+        BVH_delete_node(root);
+        uncompacted_root = NULL;
+    }
     // print_compacted(compacted);
     // getchar();
     #endif

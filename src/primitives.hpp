@@ -59,9 +59,9 @@ public:
     virtual BoundingBox world_bound() const {
         return shape->world_bound();
     };
-private:
     const Shape *shape;
     // const Material *material;
+private:
 };
 
 class Aggregate : public Primitive {
