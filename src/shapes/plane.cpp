@@ -46,6 +46,23 @@ bool Plane::intersect(Ray &in_ray, LocalGeometry *geom) const
     geom->shape = this;
     return true;
 }
+bool Plane::does_intersect(Ray &in_ray) const
+{
+    Ray ray = world_to_object(in_ray);
+    
+    const float epsilon = 1e-5;
+    // The ray is almost parallel to the plane, so don't intersect it.
+    if (fabs(ray.d.z) < epsilon) return false;
+
+    float t = -ray.o.z / ray.d.z; //---rearrange to avoid divide, at least for the exit-check?
+    if (t < ray.min_t || t > ray.max_t) return false; // There is a hit, but it is out of range of the ray segment.
+    float x = ray.o.x + ray.d.x * t;
+    float y = ray.o.y + ray.d.y * t;
+    if (x < -m_width*0.5 || x > m_width*0.5) return false;
+    if (y < -m_height*0.5 || y > m_height*0.5) return false;
+    return true;
+}
+
 
 BoundingBox Plane::object_bound() const
 {

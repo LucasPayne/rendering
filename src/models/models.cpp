@@ -3,7 +3,7 @@
 // Read OFF models with triangle faces. Comments are allowed.
 // -
 // Ported from C code.
-Model *load_OFF_model(std::string const &filename, float scale, Point center, bool invert_winding_order)
+Model *load_OFF_model(std::string const &filename, float scale, Point center, bool invert_winding_order, bool create_phong_normals)
 {   
     std::cout << "Loading model \"" << filename << "\" with parameters:\n";
     std::cout << "    scale: " << scale << "\n";
@@ -58,9 +58,29 @@ Model *load_OFF_model(std::string const &filename, float scale, Point center, bo
             triangles[3*i + 2] = c;
         }
     }
-
     // vector<>s should be on the heap, so won't be destroyed. (?)
     Model *model = new Model(vertices, num_vertices, triangles, num_faces);
+    if (create_phong_normals) {
+        model->has_normals = true;
+        model->normals = vector<Vector>(model->num_vertices);
+        for (int i = 0; i < model->num_vertices; i++) {
+            model->normals[i] = Vector(0,0,0);
+        }
+        for (int i = 0; i < model->num_triangles; i++) {
+            Point &a = model->vertices[model->triangles[3*i+0]];
+            Point &b = model->vertices[model->triangles[3*i+1]];
+            Point &c = model->vertices[model->triangles[3*i+2]];
+            Vector n = glm::cross(c-a, b-a);
+            model->normals[model->triangles[3*i+0]] += n;
+            model->normals[model->triangles[3*i+1]] += n;
+            model->normals[model->triangles[3*i+2]] += n;
+        }
+        for (int i = 0; i < model->num_vertices; i++) {
+            model->normals[i] = glm::dot(model->normals[i], model->normals[i]) < 1e-6 ? Vector(0,0,0) // shouldn't happen
+                                : glm::normalize(model->normals[i]);
+        }
+    }
+
     model->print_properties();
     return model;
 }

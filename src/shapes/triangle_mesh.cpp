@@ -65,7 +65,11 @@ bool MeshTriangle::intersect(Ray &ray, LocalGeometry *geom) const
     ray.max_t = t;
     if (mesh->model->has_normals) {
         // Compute a shading normal instead.
-        // return glm::normalize(wa*na + wb*nb + wc*nc);
+        Vector &na = mesh->model->normals[indices[0]];
+        Vector &nb = mesh->model->normals[indices[1]];
+        Vector &nc = mesh->model->normals[indices[2]];
+        // geom->n = glm::normalize(wa*na + wb*nb + wc*nc);
+        geom->n = wa*na + wb*nb + wc*nc; // normalizing here seems to be expensive. Will this be good enough?
     } else {
         geom->n = glm::normalize(n);
     }
@@ -81,22 +85,21 @@ static inline bool barycentric_triangle_convex(float wa, float wb, float wc)
 }
 bool MeshTriangle::does_intersect(Ray &ray) const
 {
-    LocalGeometry geom;
-    return intersect(ray, &geom);
-#if 0
+    Vector n = glm::cross(c()-a(), b()-a());
+    float denom = glm::dot(ray.d, n);
+    const float epsilon = 1e-4;
+    if (fabs(denom) < epsilon) {
+        // The ray is almost parallel to the triangle.
+        return false;
+    }
+    float t = -glm::dot(ray.o - a(), n)/denom;
+    if (t < ray.min_t || t > ray.max_t) return false;
+    Point p = ray(t);
+
     float wa = glm::dot(ray.d, glm::cross(b()-ray.o, c()-ray.o));
     float wb = glm::dot(ray.d, glm::cross(c()-ray.o, a()-ray.o));
     float wc = glm::dot(ray.d, glm::cross(a()-ray.o, b()-ray.o));
-    float winv = 1.0 / (wa + wb + wc);
-    wa *= winv;
-    wb *= winv;
-    wc *= winv;
-    if (!barycentric_triangle_convex(wa,wb,wc)) return false;
-    Point p = wa*a() + wb*b() + wc*c();
-    float d = glm::dot(p - ray.o, ray.d);
-    if (d < ray.min_t*ray.min_t || d > ray.max_t*ray.max_t) return false;
-    return true;
-#endif
+    return (((wa > 0) == (wb > 0)) && ((wb > 0) == (wc > 0)));
 }
 BoundingBox MeshTriangle::object_bound() const
 {
@@ -129,18 +132,16 @@ TriangleMesh::TriangleMesh(const Transform &o2w, Model *_model)
     model->transform_by(o2w);
     std::cout << "Transformed\n";
 
+    // Set up to use the usual code to create a BVH (don't want to duplicate that here).
     triangles = vector<MeshTriangle>(model->num_triangles);
     geometric_triangles = vector<GeometricPrimitive>(model->num_triangles);
     triangle_pointers = vector<Primitive *>(model->num_triangles);
-    
     for (int i = 0; i < model->num_triangles; i++) {
         triangles[i] = MeshTriangle(this, model->triangles[3*i], model->triangles[3*i+1], model->triangles[3*i+2]);
         geometric_triangles[i] = GeometricPrimitive(&triangles[i]);
         triangle_pointers[i] = &geometric_triangles[i];
     }
-    //---could reorder the triangles to the same order as the bvh nodes are packed.
-
-    std::cout << "Constructing BVH for mesh\n";
-    bvh = new BVH(triangle_pointers);
-    std::cout << "Constructed BVH";
+    // Construct a usual bounding volume heirarchy around the mesh triangles.
+    BVH bvh = BVH(triangle_pointers);
+    // Now, make a specific structure for triangles.
 }

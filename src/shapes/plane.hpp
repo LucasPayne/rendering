@@ -13,6 +13,7 @@ public:
 
     // Shape implementations
     bool intersect(Ray &ray, LocalGeometry *geom) const;
+    bool does_intersect(Ray &in_ray) const;
     BoundingBox object_bound() const;
 
 private:

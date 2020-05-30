@@ -2,6 +2,7 @@
 #define PRIMITIVES_H
 #include "core.hpp"
 #include "shapes.hpp"
+// #include "materials.hpp"
 
 /*--------------------------------------------------------------------------------
 A Primitive is more general than just an object in the scene.
@@ -60,7 +61,7 @@ public:
     };
 private:
     const Shape *shape;
-    //----material stuff.
+    // const Material *material;
 };
 
 class Aggregate : public Primitive {

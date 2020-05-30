@@ -1,12 +1,20 @@
 #include "renderer.hpp"
 #include "multithreading.hpp"
 
+
+RGB incoming_radiance(Ray &ray, LocalGeometry &geom)
+{
+    //return RGB(frand(),frand(),frand());
+    return RGB(1,1,1);
+}
+
 // Trace a ray through the primitive (probably the scene itself,
 // but since the scene is a primitive, why not allow this to be any primitive).
 RGB ray_trace(Ray &ray, Scene *scene, const Primitive *primitive)
 {
     LocalGeometry geom;
     if (primitive->intersect(ray, &geom)) {
+
         Vector &n = geom.n; //--need to normalize? Should just leave it to the primitive.
         // Initialize the returned color to an ambient (hack) term.
         RGB ambient(0.1,0.1,0.1);
@@ -21,8 +29,8 @@ RGB ray_trace(Ray &ray, Scene *scene, const Primitive *primitive)
                 color += light_radiance * (cos_theta < 0 ? 0 : cos_theta);
             }
         }
-        // Modulate with the diffuse color of the surface.
-        color *= RGB(1,1,1);
+        // Modulate with the incoming radiance.
+        color *= incoming_radiance(ray, geom);
         return color;
     } else {
         const RGB background_color(0.97, 0.7, 0.96);
