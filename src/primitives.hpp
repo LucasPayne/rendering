@@ -40,6 +40,7 @@ private:
 --------------------------------------------------------------------------------*/
 class GeometricPrimitive : public Primitive {
 public:
+    GeometricPrimitive() {}
     GeometricPrimitive(const Shape *_shape) :
         shape(_shape)
     {}
@@ -64,6 +65,7 @@ private:
 
 class Aggregate : public Primitive {
 public:
+    Aggregate() {}
     // If there is anything that doesn't make sense for aggregates available in the Primitive interface,
     // override it to give an error here.
 private:

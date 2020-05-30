@@ -68,7 +68,7 @@ public:
     RenderingState render(bool use_blocks = false, int exit_subblock = 0) {
         render(RenderingState(), use_blocks, exit_subblock);
     }
-    RenderingState render_direct(RenderingState state = RenderingState());
+    void render_direct();
 
     FrameBuffer downsampled_framebuffer();
     // Alternatively, downsample to a framebuffer provided by the caller.

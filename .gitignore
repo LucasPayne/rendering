@@ -5,3 +5,4 @@ __misc/
 build/**/*.o
 models/Stanford3DRepository
 notes.txt
+last_render.ppm

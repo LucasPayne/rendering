@@ -14,6 +14,11 @@ Scene *make_scene() {
     primitives.push_back(new GeometricPrimitive(new Plane(Point(0,-0.5,0), Vector(1,0,0), Vector(0,0,1), 1000, 1000)));
     scene->add_light(new PointLight(Point(0,30,0), 700.f*RGB(0.6,0.6,0.9)));
 
+
+    Model *bunny = load_OFF_model("models/icosahedron.off");
+    primitives.push_back(new GeometricPrimitive(new TriangleMesh(Transform::translate(0,0,0), bunny)));
+    
+
 #if 1
     BVH *bvh = new BVH(primitives);
     scene->add_primitive(bvh);

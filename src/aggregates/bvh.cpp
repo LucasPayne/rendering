@@ -61,6 +61,11 @@ static Node *BVH_create_node(vector<PrimitiveInfo> &p_infos,
                              int num_primitives,
                              int *tree_size)
 {
+    printf("first_primitive: %d\n", first_primitive);
+    printf("num_primitives: %d\n", num_primitives);
+    printf("tree_size: %d\n", *tree_size);
+    printf("num p_infos: %zu\n", p_infos.size());
+
     (*tree_size)++;
     static int max_num_primitives_in_leaf = 1;
     if (num_primitives <= max_num_primitives_in_leaf) {

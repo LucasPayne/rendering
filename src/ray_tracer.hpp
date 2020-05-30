@@ -12,9 +12,13 @@
 #include "imaging.hpp"
 #include "primitives.hpp"
 #include "shapes.hpp"
-#include "aggregates.hpp"
 #include "scene.hpp"
 #include "renderer.hpp"
+#include "models.hpp"
+
+// Include object libraries.
+#include "aggregates.hpp"
+#include "shapes_library.hpp"
 
 #include "interaction.hpp"
 #include <thread>

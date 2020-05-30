@@ -24,10 +24,12 @@ struct BVHNode {
 
 class BVH : public Aggregate {
 public:
+    BVH() {}
     BVH(const vector<Primitive *> &primitives);
     
     // Aggregate-Primitive interface implementations.
     BoundingBox world_bound() const;
+    BoundingBox object_bound() const;
     bool intersect(Ray &ray, LocalGeometry *info) const;
     bool does_intersect(Ray &ray) const;
 

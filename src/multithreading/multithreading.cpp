@@ -6,6 +6,9 @@
 // C++ parallelism.
 // https://github.com/mmp/pbrt-v3/blob/9f717d847a807793fa966cf0eaa366852efef167/src/core/parallel.cpp
 
+// Worker threads are the ones that hang around and jump in to do work if it is there,
+// which will probably be a tile to render. There can be other threads in the program.
+
 static vector<std::thread> threads;
 static bool threads_initialized = false;
 
@@ -247,13 +250,14 @@ lock_guard is destructed and the mutex is released.  The lock_guard class is non
 
 void init_multithreading(bool overriding, unsigned int override_num_threads)
 {
+    // Set up the worker threads (this does preclude use of other threads prior to calling this).
     check_not_init();
     std::cout << "Initialized multithreading\n";
 
     threads_initialized = true;
     threads_should_terminate = false;
 
-    // Create all the other threads, and put their execution context into the worker_thread() function.
+    // Create all the worker threads, and put their execution context into the worker_thread() function.
     unsigned int num_threads = (unsigned int) num_system_cores();
     if (overriding && 0 < override_num_threads && override_num_threads <= num_threads) {
         // Do not exceed number of system cores.

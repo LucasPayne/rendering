@@ -1,0 +1,488 @@
+
+#include "renderer.hpp"
+#include "multithreading.hpp"
+
+// Trace a ray through the primitive (probably the scene itself,
+// but since the scene is a primitive, why not allow this to be any primitive).
+RGB ray_trace(Ray &ray, Scene *scene, const Primitive *primitive)
+{
+    LocalGeometry geom;
+    if (primitive->intersect(ray, &geom)) {
+        Vector n = glm::normalize(geom.n); //--need to normalize? Should just leave it to the primitive.
+        // Initialize the returned color to an ambient (hack) term.
+        RGB ambient(0.1,0.1,0.1);
+        RGB color = ambient;
+        // Compute direct lighting.
+        for (Light *light : scene->lights) {
+            Vector light_vector;
+            VisibilityTester visibility_tester;
+            RGB light_radiance = light->radiance(geom.p, &light_vector, &visibility_tester);
+            if (visibility_tester.unoccluded(primitive)) {
+                float cos_theta = glm::dot(light_vector, n);
+                color += light_radiance * (cos_theta < 0 ? 0 : cos_theta);
+            }
+        }
+        // Modulate with the diffuse color of the surface.
+        color *= RGB(1,1,1);
+        return color;
+    } else {
+        const RGB background_color(0.97, 0.7, 0.96);
+        return background_color;
+    }
+}
+
+void Renderer::downsample_to_framebuffer(FrameBuffer *downsampled_fb)
+{
+    if (   downsampled_fb->width()  != m_downsampled_horizontal_pixels
+        || downsampled_fb->height() != m_downsampled_vertical_pixels) {
+        std::cerr << "ERROR: Attempted to downsample to incorrectly-sized framebuffer.";
+        exit(EXIT_FAILURE);
+    }
+    FrameBuffer &fb = m_frames[m_active_frame];
+    int ss = m_supersample_width;
+    float inv_num_samples = 1.0 / (ss * ss);
+    for (int i = 0; i < m_downsampled_horizontal_pixels; i++) {
+        for (int j = 0; j < m_downsampled_vertical_pixels; j++) {
+            RGBA color(0,0,0,0);
+            for (int ssi = 0; ssi < ss; ssi++) {
+                for (int ssj = 0; ssj < ss; ssj++) {
+                    int ip = ss * i + ssi;
+                    int jp = ss * j + ssj;
+                    color += fb(ip, jp);
+                }
+            }
+            color *= inv_num_samples;
+            downsampled_fb->set(i, j, color);
+        }
+    }
+}
+FrameBuffer Renderer::downsampled_framebuffer()
+{
+    FrameBuffer downsampled_fb(m_downsampled_horizontal_pixels, m_downsampled_vertical_pixels);
+    downsample_to_framebuffer(&downsampled_fb);
+    return downsampled_fb;
+}
+void Renderer::write_to_ppm(std::string const &filename)
+{
+    // Write to an image file, but downsample first.
+    FrameBuffer downsampled_fb = downsampled_framebuffer();
+    downsampled_fb.write_to_ppm(filename);
+}
+
+// This render function is intended for just rendering an image in one pass.
+void Renderer::render_direct()
+{
+    static int tile_order[256*3] = {
+        0,0, 16,
+        8,0, 8,
+        8,8, 8,
+        0,8, 8,
+        4,0, 4,
+        4,4, 4,
+        0,4, 4,
+        4,8, 4,
+        4,12, 4,
+        0,12, 4,
+        8,12, 4,
+        12,12, 4,
+        12,8, 4,
+        12,4, 4,
+        8,4, 4,
+        12,0, 4,
+        0,2, 2,
+        0,6, 2,
+        0,10, 2,
+        0,14, 2,
+        2,0, 2,
+        2,2, 2,
+        2,4, 2,
+        2,6, 2,
+        2,8, 2,
+        2,10, 2,
+        2,12, 2,
+        2,14, 2,
+        4,2, 2,
+        4,6, 2,
+        4,10, 2,
+        4,14, 2,
+        6,0, 2,
+        6,2, 2,
+        6,4, 2,
+        6,6, 2,
+        6,8, 2,
+        6,10, 2,
+        6,12, 2,
+        6,14, 2,
+        8,2, 2,
+        8,6, 2,
+        8,10, 2,
+        8,14, 2,
+        10,0, 2,
+        10,2, 2,
+        10,4, 2,
+        10,6, 2,
+        10,8, 2,
+        10,10, 2,
+        10,12, 2,
+        10,14, 2,
+        12,2, 2,
+        12,6, 2,
+        12,10, 2,
+        12,14, 2,
+        14,0, 2,
+        14,2, 2,
+        14,4, 2,
+        14,6, 2,
+        14,8, 2,
+        14,10, 2,
+        14,12, 2,
+        14,14, 2,
+        0,1, 1,
+        0,3, 1,
+        0,5, 1,
+        0,7, 1,
+        0,9, 1,
+        0,11, 1,
+        0,13, 1,
+        0,15, 1,
+        1,0, 1,
+        1,1, 1,
+        1,2, 1,
+        1,3, 1,
+        1,4, 1,
+        1,5, 1,
+        1,6, 1,
+        1,7, 1,
+        1,8, 1,
+        1,9, 1,
+        1,10, 1,
+        1,11, 1,
+        1,12, 1,
+        1,13, 1,
+        1,14, 1,
+        1,15, 1,
+        2,1, 1,
+        2,3, 1,
+        2,5, 1,
+        2,7, 1,
+        2,9, 1,
+        2,11, 1,
+        2,13, 1,
+        2,15, 1,
+        3,0, 1,
+        3,1, 1,
+        3,2, 1,
+        3,3, 1,
+        3,4, 1,
+        3,5, 1,
+        3,6, 1,
+        3,7, 1,
+        3,8, 1,
+        3,9, 1,
+        3,10, 1,
+        3,11, 1,
+        3,12, 1,
+        3,13, 1,
+        3,14, 1,
+        3,15, 1,
+        4,1, 1,
+        4,3, 1,
+        4,5, 1,
+        4,7, 1,
+        4,9, 1,
+        4,11, 1,
+        4,13, 1,
+        4,15, 1,
+        5,0, 1,
+        5,1, 1,
+        5,2, 1,
+        5,3, 1,
+        5,4, 1,
+        5,5, 1,
+        5,6, 1,
+        5,7, 1,
+        5,8, 1,
+        5,9, 1,
+        5,10, 1,
+        5,11, 1,
+        5,12, 1,
+        5,13, 1,
+        5,14, 1,
+        5,15, 1,
+        6,1, 1,
+        6,3, 1,
+        6,5, 1,
+        6,7, 1,
+        6,9, 1,
+        6,11, 1,
+        6,13, 1,
+        6,15, 1,
+        7,0, 1,
+        7,1, 1,
+        7,2, 1,
+        7,3, 1,
+        7,4, 1,
+        7,5, 1,
+        7,6, 1,
+        7,7, 1,
+        7,8, 1,
+        7,9, 1,
+        7,10, 1,
+        7,11, 1,
+        7,12, 1,
+        7,13, 1,
+        7,14, 1,
+        7,15, 1,
+        8,1, 1,
+        8,3, 1,
+        8,5, 1,
+        8,7, 1,
+        8,9, 1,
+        8,11, 1,
+        8,13, 1,
+        8,15, 1,
+        9,0, 1,
+        9,1, 1,
+        9,2, 1,
+        9,3, 1,
+        9,4, 1,
+        9,5, 1,
+        9,6, 1,
+        9,7, 1,
+        9,8, 1,
+        9,9, 1,
+        9,10, 1,
+        9,11, 1,
+        9,12, 1,
+        9,13, 1,
+        9,14, 1,
+        9,15, 1,
+        10,1, 1,
+        10,3, 1,
+        10,5, 1,
+        10,7, 1,
+        10,9, 1,
+        10,11, 1,
+        10,13, 1,
+        10,15, 1,
+        11,0, 1,
+        11,1, 1,
+        11,2, 1,
+        11,3, 1,
+        11,4, 1,
+        11,5, 1,
+        11,6, 1,
+        11,7, 1,
+        11,8, 1,
+        11,9, 1,
+        11,10, 1,
+        11,11, 1,
+        11,12, 1,
+        11,13, 1,
+        11,14, 1,
+        11,15, 1,
+        12,1, 1,
+        12,3, 1,
+        12,5, 1,
+        12,7, 1,
+        12,9, 1,
+        12,11, 1,
+        12,13, 1,
+        12,15, 1,
+        13,0, 1,
+        13,1, 1,
+        13,2, 1,
+        13,3, 1,
+        13,4, 1,
+        13,5, 1,
+        13,6, 1,
+        13,7, 1,
+        13,8, 1,
+        13,9, 1,
+        13,10, 1,
+        13,11, 1,
+        13,12, 1,
+        13,13, 1,
+        13,14, 1,
+        13,15, 1,
+        14,1, 1,
+        14,3, 1,
+        14,5, 1,
+        14,7, 1,
+        14,9, 1,
+        14,11, 1,
+        14,13, 1,
+        14,15, 1,
+        15,0, 1,
+        15,1, 1,
+        15,2, 1,
+        15,3, 1,
+        15,4, 1,
+        15,5, 1,
+        15,6, 1,
+        15,7, 1,
+        15,8, 1,
+        15,9, 1,
+        15,10, 1,
+        15,11, 1,
+        15,12, 1,
+        15,13, 1,
+        15,14, 1,
+        15,15, 1,
+    };
+
+
+    // int pattern[16] = { 0, 8, 4, 12, 2, 6, 10, 14, 1, 3, 5, 7, 9, 11, 13, 15 };
+    // int sizes[16] = { 16
+    // int p_n = 16;
+
+    int width = pixels_x();
+    int height = pixels_y();
+    const int tile_size = 16;
+    int tiles_x = (width + tile_size - 1) / tile_size; // This arithmetic works out, allowing the divide to count one over,
+                                                       // with the -1 to handle the case where the extent is divided perfectly.
+    int tiles_y = (height + tile_size - 1) / tile_size;
+
+    Vector camera_right_extent = camera->imaging_plane_width() * camera->camera_to_world(Vector(1,0,0));
+    Vector camera_down_extent = camera->imaging_plane_height() * camera->camera_to_world(Vector(0,-1,0));
+    Point origin = camera->position();
+    Vector shifted_camera_top_left = camera->lens_point(0,1) - origin;
+
+    // Iterate over all i,j pairs, i:[0,tiles_x), j:[0,tiles_y).
+    // This is done with parallel_for_2D, so that if multithreading is available,
+    // threads can work on (i,j) pairs separately.
+    // notes on syntax:
+    //    [&](...){} is a lambda function where [&] denotes having everything in the current scope available in the body by reference.
+    //
+    parallel_for_2D([&](int tile_i, int tile_j, int thread_index){
+        //--^ Parallelizable for-loop over tiles.
+        // Compute the subblock this tile corresponds to (avoiding stepping over the target extents).
+        // x over [x0, x1)
+        // y over [y0, y1)
+        int x0 = tile_size * tile_i;
+        int x1 = min(width, tile_size * (tile_i + 1));
+        int y0 = tile_size * tile_j;
+        int y1 = min(height, tile_size * (tile_j + 1));
+
+       // Loop over the pixels (this is the single-thread task).
+#if 1
+        
+        for (int bi = 0; bi < 256; bi++) {
+            int i = x0 + tile_order[3*bi + 0];
+            int j = y0 + tile_order[3*bi + 1];
+            if (i >= width || j >= height) continue;
+            
+            int w = tile_order[3*bi + 2];
+            int h = tile_order[3*bi + 2];
+            if (i + w >= width) w = width - i;
+            if (j + h >= height) h = height - j;
+
+            float x = pixels_x_inv() * i;
+            float y = pixels_y_inv() * j;
+            Ray ray(origin, shifted_camera_top_left + x*camera_right_extent + y*camera_down_extent);
+
+            // Ray trace.
+            RGB color = ray_trace(ray, scene, scene);
+
+            // Update the pixel color.
+            set_pixel_block(i, j, i+w, h, color);
+        }
+#else
+        for (int i = x0; i < x1; i++) {
+            for (int j = y0; j < y1; j++) {
+                // Generate the ray.
+                float x = pixels_x_inv() * i;
+                float y = pixels_y_inv() * j;
+                Ray ray(origin, shifted_camera_top_left + x*camera_right_extent + y*camera_down_extent);
+
+                // Ray trace.
+                RGB color = ray_trace(ray, scene, scene);
+
+                // Update the pixel color.
+                set_pixel(i, j, color);
+            }
+        }
+#endif
+    }, tiles_x, tiles_y);
+}
+
+// This render function is intended for interactive rendering, where a lower-quality image is shown while moving,
+// and is improved on while the camera is not moving
+//
+// ---- disregarding animated objects, in which case selective rerendering might be neat, and the ability to pause all objects/simulation.
+RenderingState Renderer::render(RenderingState state, bool use_blocks, int exit_subblock)
+{
+    // Initialize values used to generate rays.
+    Point origin = camera->position();
+
+    // Information for the block-grid pattern used for generating rays and updating pixels.
+    int pattern[8] = { 0, 4, 2, 6, 1, 3, 5, 7 };
+    int sizes[8] = { 8, 8, 4, 4, 2, 2, 1, 1 };
+    int p_n = 8;
+    int max_p_n;
+    if (exit_subblock == 0) max_p_n = 8;
+    else if (exit_subblock == 1) max_p_n = 6;
+    else if (exit_subblock == 2) max_p_n = 4;
+    else if (exit_subblock == 3) max_p_n = 2;
+    else if (exit_subblock == 4) max_p_n = 0;
+    else {
+        std::cerr << "ERROR: The renderer can be made to stop at a certain resolution of sub-blocks of pixels, but an invalid one was given.\n";
+        exit(EXIT_FAILURE);
+    }
+
+    // Coroutine stuff
+    int start_i = state.i;
+    int start_j = state.j;
+    int start_pi = state.pi;
+    int start_pj = state.pj;
+    bool yielding = false;
+    bool i_entered = false;
+    bool j_entered = false;
+    bool pj_entered = false;
+    
+    // A lot of complication in the loop is here because it needs to act as a coroutine,
+    // and also scatter rendered pixels giving an image of increasing resolution without double-tracing
+    // any pixel.
+    for (int pi = start_pi; pi < max_p_n; pi++) {
+        for (int pj = pj_entered ? 0 : start_pj; pj < max_p_n; pj++) {
+            pj_entered = true;
+            for (int i = i_entered ? pattern[pi] : start_i; i < pixels_x(); i += p_n) {
+                i_entered = true;
+                for (int j = j_entered ? pattern[pj] : start_j; j < pixels_y(); j += p_n) {
+                    j_entered = true;
+                    if (yielding) return RenderingState(pi,pj,i,j);
+
+                    // Generate the ray.
+                    float x = pixels_x_inv() * i;
+                    float y = 1 - pixels_y_inv() * j;
+                    Point p = camera->lens_point(x, y);
+                    Ray ray(origin, p - origin);
+
+                    // Ray trace.
+                    RGB color = ray_trace(ray, scene, scene);
+
+                    // Update the pixel or block of pixels.
+                    if (use_blocks) set_pixel_block(i, j, i+sizes[pi]-1, j+sizes[pi]-1, color);
+                    else set_pixel(i, j, color);
+
+                    // Check if the render loop should yield. (- should this be done every iteration?)
+                    if (rendering_should_yield != NULL && rendering_should_yield()) {
+                        // Let the loop itself figure out what the next state is.
+                        yielding = true;
+                    }
+                }
+            }
+        }
+    }
+    return RenderingState(0,0,0,0,true); // The rendering has finished.
+}
+
+void Renderer::print_properties() const
+{
+    std::cout << "renderer properties:" << "\n";
+    std::cout << "    horizontal_pixels: " << m_horizontal_pixels << "\n";
+    std::cout << "    vertical_pixels: " << m_vertical_pixels << "\n";
+    std::cout << "    super_sample_width: " << m_supersample_width << "\n";
+    std::cout << "    downsampled_horizontal_pixels: " << m_downsampled_horizontal_pixels << "\n";
+    std::cout << "    downsampled_vertical_pixels: " << m_downsampled_vertical_pixels << "\n";
+}

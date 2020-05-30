@@ -3,7 +3,7 @@
 // Read OFF models with triangle faces. Comments are allowed.
 // -
 // Ported from C code.
-Model load_OFF_model(std::string const &filename, float scale, Point center, bool invert_winding_order)
+Model *load_OFF_model(std::string const &filename, float scale, Point center, bool invert_winding_order)
 {   
     std::cout << "Loading model \"" << filename << "\" with parameters:\n";
     std::cout << "    scale: " << scale << "\n";
@@ -60,8 +60,8 @@ Model load_OFF_model(std::string const &filename, float scale, Point center, boo
     }
 
     // vector<>s should be on the heap, so won't be destroyed. (?)
-    Model model = Model(vertices, num_vertices, triangles, num_faces);
-    model.print_properties();
+    Model *model = new Model(vertices, num_vertices, triangles, num_faces);
+    model->print_properties();
     return model;
 }
 
@@ -71,4 +71,34 @@ void Model::print_properties() const
     std::cout << "Model properties:\n";
     std::cout << "    num_vertices: " << num_vertices << "\n";
     std::cout << "    num_triangles: " << num_triangles << "\n";
+}
+
+
+// copy() and transform_by() are primarily for baking a model into the scene, in world space,
+// so rays don't have to be transformed into its object space.
+Model *Model::copy()
+{
+    Model *new_model = new Model();
+    new_model->num_vertices = num_vertices;
+    new_model->has_normals = has_normals;
+    new_model->num_triangles = num_triangles;
+    // Remember to copy every dynamic object!
+    // There probably is a better way to do this.
+    new_model->vertices = vector<Point>(num_vertices);
+    for (int i = 0; i < num_vertices; i++) new_model->vertices[i] = vertices[i];
+    new_model->triangles = vector<uint16_t>(3*num_triangles);
+    for (int i = 0; i < 3*num_triangles; i++) new_model->triangles[i] = triangles[i];
+
+    if (has_normals) {
+        new_model->normals = vector<Vector>(num_vertices);
+        for (int i = 0; i < num_vertices; i++) new_model->normals[i] = normals[i];
+    }
+    return new_model;
+}
+void Model::transform_by(const Transform &transform)
+{
+    //---If normals are held, transform these.
+    for (int i = 0; i < num_vertices; i++) {
+        vertices[i] = transform(vertices[i]);
+    }
 }

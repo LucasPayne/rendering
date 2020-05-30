@@ -7,7 +7,7 @@ RGB ray_trace(Ray &ray, Scene *scene, const Primitive *primitive)
 {
     LocalGeometry geom;
     if (primitive->intersect(ray, &geom)) {
-        Vector n = glm::normalize(geom.n); //--need to normalize? Should just leave it to the primitive.
+        Vector &n = geom.n; //--need to normalize? Should just leave it to the primitive.
         // Initialize the returned color to an ambient (hack) term.
         RGB ambient(0.1,0.1,0.1);
         RGB color = ambient;
@@ -69,7 +69,7 @@ void Renderer::write_to_ppm(std::string const &filename)
 }
 
 // This render function is intended for just rendering an image in one pass.
-RenderingState Renderer::render_direct(RenderingState state)
+void Renderer::render_direct()
 {
     int width = pixels_x();
     int height = pixels_y();
@@ -115,7 +115,6 @@ RenderingState Renderer::render_direct(RenderingState state)
            }
        }
     }, tiles_x, tiles_y);
-    return RenderingState(0,0,true);
 }
 
 // This render function is intended for interactive rendering, where a lower-quality image is shown while moving,

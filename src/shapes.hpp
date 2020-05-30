@@ -95,9 +95,6 @@ struct LocalGeometry {
     Vector n; // Normal outward from the surface element.
 };
 
-#include "shapes/sphere.hpp"
-#include "shapes/plane.hpp"
-// #include "shapes/triangle_mesh.hpp"
 // #include "shapes/quadric.hpp"
 
 #endif // SHAPES_H

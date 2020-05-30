@@ -1,7 +1,7 @@
 /*--------------------------------------------------------------------------------
     Plane primitive.
 --------------------------------------------------------------------------------*/
-#include "shapes.hpp"
+#include "shapes/plane.hpp"
 
 Plane::Plane(Point position, Vector x_extent, Vector y_extent, float width, float height)
 {

@@ -29,8 +29,11 @@ struct Model {
         has_normals = false;
     }
     void print_properties() const;
+
+    Model *copy();
+    void transform_by(const Transform &transform);
 };
 
-Model load_OFF_model(std::string const &filename, float scale = 1.f, Point center = Point(0,0,0), bool invert_winding_order = false);
+Model *load_OFF_model(std::string const &filename, float scale = 1.f, Point center = Point(0,0,0), bool invert_winding_order = false);
 
 #endif // MODELS_H

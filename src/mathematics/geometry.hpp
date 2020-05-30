@@ -67,8 +67,23 @@ struct Point {
         return (*this);
     }
 };
+// These make sense for barycentric combinations.
+inline Point operator*(float t, const Point &p)
+{
+    return Point(t*p.x, t*p.y, t*p.z);
+}
+inline Point operator*(const Point &p, float t)
+{
+    return Point(t*p.x, t*p.y, t*p.z);
+}
+inline Point operator+(const Point &p, const Point &q)
+{
+    return Point(p.x*q.x, p.y*q.y, p.z*q.z);
+}
 
 
+// inconvenient and ugly, should just not use glm vectors ... 
+inline Vector PointToVector(const Point &p) { return Vector(p.x,p.y,p.z); }
 
 // Print a Point.
 std::ostream &operator<<(std::ostream &os, const Point &point);

@@ -19,7 +19,7 @@ clean:
 build/libraries/glad.o: libraries/glad/glad.c
 	$(CC) -c $< -o $@ $(CFLAGS)
 
-build/core.o: build/mathematics.o build/primitives.o build/illumination.o build/imaging.o build/scene.o build/renderer.o build/interaction.o build/shapes.o build/aggregates.o build/multithreading.o
+build/core.o: build/mathematics.o build/primitives.o build/illumination.o build/imaging.o build/scene.o build/renderer.o build/interaction.o build/shapes.o build/aggregates.o build/multithreading.o build/models.o
 	ld -relocatable -o $@ $^
 
 build/mathematics.o: build/mathematics/geometry.o build/mathematics/transform.o build/mathematics/numerics.o
@@ -44,7 +44,7 @@ build/aggregates/primitive_list.o: src/aggregates/primitive_list.cpp src/aggrega
 build/aggregates/bvh.o: src/aggregates/bvh.cpp src/aggregates/bvh.hpp src/primitives.hpp src/aggregates.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)
 
-build/shapes.o: build/shapes/shapes.o build/shapes/sphere.o build/shapes/plane.o
+build/shapes.o: build/shapes/shapes.o build/shapes/sphere.o build/shapes/plane.o build/shapes/triangle_mesh.o
 	ld -relocatable -o $@ $^
 build/shapes/shapes.o: src/shapes/shapes.cpp src/shapes.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)
@@ -52,8 +52,8 @@ build/shapes/sphere.o: src/shapes/sphere.cpp src/shapes/sphere.hpp src/shapes.hp
 	$(CC) -c $< -o $@ $(CFLAGS)
 build/shapes/plane.o: src/shapes/plane.cpp src/shapes/plane.hpp src/shapes.hpp src/mathematics.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)
-# build/shapes/triangle_mesh.o: src/shapes/triangle_mesh.cpp src/shapes/triangle_mesh.hpp src/shapes.hpp src/models.hpp
-# 	$(CC) -c $< -o $@ $(CFLAGS)
+build/shapes/triangle_mesh.o: src/shapes/triangle_mesh.cpp src/shapes/triangle_mesh.hpp src/shapes.hpp src/models.hpp
+	$(CC) -c $< -o $@ $(CFLAGS)
 # build/shapes/quadric.o: src/shapes/quadric.cpp src/shapes/quadric.hpp src/shapes.hpp src/mathematics.hpp
 # 	$(CC) -c $< -o $@ $(CFLAGS)
 
@@ -77,8 +77,8 @@ build/scene.o: src/scene/scene.cpp src/scene.hpp src/mathematics.hpp src/primiti
 build/renderer.o: src/renderer/renderer.cpp src/renderer.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)
 
-# build/models.o: src/models/models.cpp src/models.hpp src/primitives.hpp src/illumination/color.hpp src/mathematics.hpp
-# 	$(CC) -c $< -o $@ $(CFLAGS)
+build/models.o: src/models/models.cpp src/models.hpp src/primitives.hpp src/mathematics.hpp
+	$(CC) -c $< -o $@ $(CFLAGS)
 
 build/gl_core.o: build/gl.o build/gl/gl_texture.o build/gl/gl_shader_program.o build/gl/gl_input.o
 	ld -relocatable -o $@ $^

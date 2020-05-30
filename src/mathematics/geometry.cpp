@@ -116,3 +116,4 @@ std::ostream &operator<<(std::ostream &os, const BoundingBox &box)
     os << "BoundingBox(" << box.corners[0] << ", " << box.corners[1] << ")";
     return os;
 }
+

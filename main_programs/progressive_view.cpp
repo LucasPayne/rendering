@@ -3,6 +3,24 @@
 
 Player *g_player;
 
+static std::thread rendering_thread;
+#include <condition_variable>
+static std::condition_variable rendering_condition;
+static bool should_render = false;
+
+static void rendering_thread_function(Renderer *renderer)
+{
+    // The rendering thread waits around in this function for an alert
+    // to start processing a render.
+    // I don't think there are synchronization issues here since it is just the one thread.
+    while (true) {
+        if (should_render) {
+            renderer->render_direct();
+            should_render = false;
+        }
+    }
+}
+
 bool pretty_much_equal(const Transform &t1, const Transform &t2)
 {
     // Test if a transform has changed or not. The definition of "pretty much equal" could differ ...
@@ -179,7 +197,8 @@ void FrameBufferViewerLoop::direct_view_loop() {
     // note:
     //    As long as the image is being rendered, the logic of this loop is a free-for-all
     //    attempt to make the image being synthesized kind of look good while still or moving.
-    rendering_state = renderer->render_direct(rendering_state);
+
+    should_render = true;
     renderer->downsample_to_framebuffer(&downsampled_framebuffer);
 
     shader_program.bind();
@@ -308,6 +327,8 @@ OpenGLContext framebuffer_viewer_context(Renderer *renderer, const std::string &
 void main_program(int argc, char *argv[], Renderer *renderer)
 {
     OpenGLContext context = framebuffer_viewer_context(renderer, "Progressive view");
+
+    rendering_thread = std::thread(rendering_thread_function, renderer);
 
     //---unsure if this angle extraction is correct.
     Point camera_pos = renderer->camera->camera_to_world(Point(0,0,0));
