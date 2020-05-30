@@ -2,7 +2,20 @@
 #define PRIMITIVES_H
 #include "core.hpp"
 #include "shapes.hpp"
+#include "textures.hpp"
 // #include "materials.hpp"
+
+class Primitive;
+class GeometricPrimitive;
+
+struct Intersection {
+    LocalGeometry geom;
+    GeometricPrimitive *primitive;
+    Intersection(LocalGeometry _geom, GeometricPrimitive *_primitive) :
+        geom{_geom}, primitive{_primitive}
+    {}
+    Intersection() {}
+};
 
 /*--------------------------------------------------------------------------------
 A Primitive is more general than just an object in the scene.
@@ -26,7 +39,7 @@ public:
 
     // These are pure virtual so that derived classes can, for example, redefine can_intersect()
     // to return false, and give an error on these so that further derived classes don't have to implement it themselves.
-    virtual bool intersect(Ray &ray, LocalGeometry *info) const = 0;
+    virtual bool intersect(Ray &ray, Intersection *inter);
     virtual bool does_intersect(Ray &ray) const = 0;
 
     // Overridable functions.
@@ -42,16 +55,20 @@ private:
 class GeometricPrimitive : public Primitive {
 public:
     GeometricPrimitive() {}
-    GeometricPrimitive(const Shape *_shape) :
-        shape(_shape)
-    {}
+    GeometricPrimitive(Shape *_shape,
+                       Texture *_diffuse_texture = NULL,
+                       Texture *_specular_texture = NULL);
 
     // Pass on some routines to the underlying shape.
     virtual bool can_intersect() const { 
         return shape->can_intersect();
     }
-    virtual bool intersect(Ray &ray, LocalGeometry *geom) const {
-        return shape->intersect(ray, geom);
+    virtual bool intersect(Ray &ray, Intersection *inter) {
+        if (shape->intersect(ray, &inter->geom)) {
+            inter->primitive = this;
+            return true;
+        }
+        return false;
     }
     virtual bool does_intersect(Ray &ray) const {
         return shape->does_intersect(ray);
@@ -59,8 +76,11 @@ public:
     virtual BoundingBox world_bound() const {
         return shape->world_bound();
     };
-    const Shape *shape;
-    // const Material *material;
+    Shape *shape;
+
+    // All that is used currently is a basic Phong lighting model.
+    Texture *diffuse_texture;
+    Texture *specular_texture;
 private:
 };
 
@@ -69,6 +89,7 @@ public:
     Aggregate() {}
     // If there is anything that doesn't make sense for aggregates available in the Primitive interface,
     // override it to give an error here.
+    virtual bool intersect(Ray &ray, Intersection *inter);
 private:
 };
 

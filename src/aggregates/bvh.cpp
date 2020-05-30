@@ -230,27 +230,27 @@ BoundingBox BVH::world_bound() const
 #if NO_COMPACTIFY
 // Inefficient implementations that just traverse the data structure created while the BVH was being built.
 
-static void recursive_intersect(const BVH *bvh, Ray &ray, Node *node, LocalGeometry *info, bool *any)
+static void recursive_intersect(const BVH *bvh, Ray &ray, Node *node, Intersection *inter, bool *any)
 {
     bool is_leaf = node->children[0] == NULL;
     if (is_leaf) {
         for (int i = node->first_primitive; i < node->first_primitive+node->num_primitives; i++) {
-            if (bvh->uncompacted_p_infos[i].primitive->intersect(ray, info)) *any = true;
+            if (bvh->uncompacted_p_infos[i].primitive->intersect(ray, inter)) *any = true;
         }
     } else {
         if (!node->box.intersect(ray)) return;
-        recursive_intersect(bvh, ray, node->children[0], info, any);
-        recursive_intersect(bvh, ray, node->children[1], info, any);
+        recursive_intersect(bvh, ray, node->children[0], inter, any);
+        recursive_intersect(bvh, ray, node->children[1], inter, any);
     }
 }
-bool BVH::intersect(Ray &ray, LocalGeometry *info) const
+bool intersect(Ray &ray, Intersection *inter)
 {
     bool any = false;
-    LocalGeometry info_p;
-    recursive_intersect(this, ray, uncompacted_root, &info_p, &any);
+    Intersection inter_p;
+    recursive_intersect(this, ray, uncompacted_root, &inter_p, &any);
 
     if (any) {
-        *info = info_p;
+        *inter = inter_p;
         return true;
     } else {
         return false;
@@ -258,8 +258,8 @@ bool BVH::intersect(Ray &ray, LocalGeometry *info) const
 }
 bool BVH::does_intersect(Ray &ray) const
 {
-    LocalGeometry geom;
-    return intersect(ray, &geom);
+    Intersection inter;
+    return intersect(ray, &inter);
 }
 #else
 // Hopefully more efficient methods that traverse a compacted data structure, with optimizations
@@ -303,7 +303,7 @@ static inline bool intersect_box(const BVHNode &node, const Ray &ray, const Vect
 }
 
 
-bool BVH::intersect(Ray &ray, LocalGeometry *out_geom) const
+bool BVH::intersect(Ray &ray, Intersection *inter)
 {
     // Precomputations
     Vector inv_d(1.f / ray.d.x, 1.f / ray.d.y, 1.f / ray.d.z);
@@ -334,7 +334,7 @@ bool BVH::intersect(Ray &ray, LocalGeometry *out_geom) const
                 for (int i = compacted[index].primitives_offset;
                          i < n;
                          i++) {
-                    if (primitives[i]->intersect(ray, out_geom)) any_intersection = true;
+                    if (primitives[i]->intersect(ray, inter)) any_intersection = true;
                 }
                 index = todo[todo_now--];
             }

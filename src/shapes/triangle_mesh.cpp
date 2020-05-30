@@ -299,7 +299,9 @@ static inline bool triangles_bvh_intersect(const TriangleMesh *mesh, const vecto
     } while (todo_now >= 0);
     if (any_intersection) {
         geom->shape = mesh;
-        // geom->n = glm::normalize(geom->n);
+        // already should be at least approximately normal if using Phong normals.
+        // If not, save some computation (?) by normalizing once the final LocalGeometry is found.
+        if (mesh->model->has_normals) geom->n = glm::normalize(geom->n);
     }
     return any_intersection;
 }

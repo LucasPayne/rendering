@@ -5,9 +5,9 @@ BoundingBox Scene::world_bound() const
 {
     return primitives.world_bound();
 }
-bool Scene::intersect(Ray &ray, LocalGeometry *geom) const
+bool Scene::intersect(Ray &ray, Intersection *inter)
 {
-    return primitives.intersect(ray, geom);
+    return primitives.intersect(ray, inter);
 }
 bool Scene::does_intersect(Ray &ray) const
 {

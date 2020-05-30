@@ -2,18 +2,20 @@
 #include "multithreading.hpp"
 
 
-RGB incoming_radiance(Ray &ray, LocalGeometry &geom)
+RGB incoming_radiance(GeometricPrimitive *primitive, Ray &ray, LocalGeometry &geom)
 {
-    //return RGB(frand(),frand(),frand());
-    return RGB(1,1,1);
+    return primitive->diffuse_texture->rgb_lookup(geom);
 }
 
 // Trace a ray through the primitive (probably the scene itself,
 // but since the scene is a primitive, why not allow this to be any primitive).
-RGB ray_trace(Ray &ray, Scene *scene, const Primitive *primitive)
+RGB ray_trace(Ray &ray, Scene *scene, Primitive *root_primitive)
 {
-    LocalGeometry geom;
-    if (primitive->intersect(ray, &geom)) {
+    Intersection inter;
+    if (root_primitive->intersect(ray, &inter)) {
+
+        GeometricPrimitive *hit_primitive = inter.primitive;
+        LocalGeometry &geom = inter.geom;
 
         Vector &n = geom.n; //--need to normalize? Should just leave it to the primitive.
         // Initialize the returned color to an ambient (hack) term.
@@ -24,13 +26,13 @@ RGB ray_trace(Ray &ray, Scene *scene, const Primitive *primitive)
             Vector light_vector;
             VisibilityTester visibility_tester;
             RGB light_radiance = light->radiance(geom.p, &light_vector, &visibility_tester);
-            if (visibility_tester.unoccluded(primitive)) {
+            if (visibility_tester.unoccluded(root_primitive)) {
                 float cos_theta = glm::dot(light_vector, n);
                 color += light_radiance * (cos_theta < 0 ? 0 : cos_theta);
             }
         }
         // Modulate with the incoming radiance.
-        color *= incoming_radiance(ray, geom);
+        color *= incoming_radiance(hit_primitive, ray, geom);
         return color;
     } else {
         const RGB background_color(0.97, 0.7, 0.96);

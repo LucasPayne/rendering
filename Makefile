@@ -19,7 +19,7 @@ clean:
 build/libraries/glad.o: libraries/glad/glad.c
 	$(CC) -c $< -o $@ $(CFLAGS)
 
-build/core.o: build/mathematics.o build/primitives.o build/illumination.o build/imaging.o build/scene.o build/renderer.o build/interaction.o build/shapes.o build/aggregates.o build/multithreading.o build/models.o
+build/core.o: build/mathematics.o build/primitives.o build/illumination.o build/imaging.o build/scene.o build/renderer.o build/interaction.o build/shapes.o build/aggregates.o build/multithreading.o build/models.o build/textures.o
 	ld -relocatable -o $@ $^
 
 build/mathematics.o: build/mathematics/geometry.o build/mathematics/transform.o build/mathematics/numerics.o
@@ -78,6 +78,9 @@ build/renderer.o: src/renderer/renderer.cpp src/renderer.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)
 
 build/models.o: src/models/models.cpp src/models.hpp src/primitives.hpp src/mathematics.hpp
+	$(CC) -c $< -o $@ $(CFLAGS)
+
+build/textures.o: src/textures/textures.cpp src/textures.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)
 
 build/gl_core.o: build/gl.o build/gl/gl_texture.o build/gl/gl_shader_program.o build/gl/gl_input.o

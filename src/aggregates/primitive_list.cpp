@@ -16,21 +16,18 @@ BoundingBox PrimitiveList::world_bound() const
 
 // Intersection routines are just passed down to every primitive.
 // However, first the bounding box is checked.
-bool PrimitiveList::intersect(Ray &ray, LocalGeometry *out_geom) const
+bool PrimitiveList::intersect(Ray &ray, Intersection *out_inter)
 {
     if (!world_bound().intersect(ray)) return false;
 
     bool intersected = false;
-    LocalGeometry geom;
-    for (const Primitive * primitive : primitives) {
-        LocalGeometry primitive_geom;
-        if (primitive->intersect(ray, &primitive_geom)) {
+    Intersection inter;
+    for (Primitive * primitive : primitives) {
+        if (primitive->intersect(ray, &inter)) {
             intersected = true;
-            geom = primitive_geom; // Copy this over, since maybe a primitive that is not intersected with may still alter the geom structure
-                                   // (although this shouldn't be done in primitive code).
         }
     }
-    if (intersected) *out_geom = geom;
+    if (intersected) *out_inter = inter;
     return intersected;
 }
 bool PrimitiveList::does_intersect(Ray &ray) const

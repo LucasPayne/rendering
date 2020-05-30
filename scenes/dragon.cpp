@@ -12,10 +12,10 @@ Scene *make_scene() {
 
 
     float r = 20;
-    int n = 3;
+    int n = 5;
     Model *dragon = load_OFF_model("models/dragon.off", 10, Point(0,0,0), true);
     for (int i = 0; i < n; i++) {
-        float theta = 0.5 * i*2*M_PI/n;
+        float theta = i*2*M_PI/n;
         primitives.push_back(new GeometricPrimitive(
                              new TriangleMesh(Transform::translate(r*sin(theta),-6,r*cos(theta)),
                              dragon)));

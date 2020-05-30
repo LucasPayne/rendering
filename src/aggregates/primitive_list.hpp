@@ -24,7 +24,7 @@ public:
 
     // Aggregate-Primitive interface implementations.
     BoundingBox world_bound() const;
-    bool intersect(Ray &ray, LocalGeometry *info) const;
+    bool intersect(Ray &ray, Intersection *inter);
     bool does_intersect(Ray &ray) const;
     // bool can_intersect() const { return true; }
 private:
