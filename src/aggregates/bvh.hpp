@@ -14,12 +14,13 @@ struct Node {
         num_primitives = _num_primitives;
         children[0] = children[1] = NULL;
     }
-    Node(int _mid, Node *child_1, Node *child_2) {
+    Node(int _mid, Node *child_1, Node *child_2, int _axis) {
         // Construct a branching node.
         children[0] = child_1;
         children[1] = child_2;
         box = enlarged(child_1->box, child_2->box);
-        mid = mid;
+        mid = _mid;
+        axis = _axis;
     }
     bool is_leaf() const {
         return children[0] == NULL;
@@ -30,6 +31,7 @@ struct Node {
     int mid; //---testing
     int first_primitive; // Leaf nodes.
     int num_primitives; // Leaf nodes.
+    int axis; //0:x  1:y  2:z
 };
 #define IS_LEAF(NODE) (( NODE )->children[0] == NULL)
 #if NO_COMPACTIFY
@@ -44,7 +46,8 @@ struct BVHNode {
         uint32_t second_child_offset;
     };
     uint8_t num_primitives;
-    uint8_t __pad[3];
+    uint8_t axis; //0:x  1:y  2:z
+    uint8_t __pad[2];
 };
 
 class BVH : public Aggregate {

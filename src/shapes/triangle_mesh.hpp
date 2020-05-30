@@ -8,13 +8,15 @@
 
 struct TriangleNode {
     BoundingBox box; // 6 floats, 24 bytes
-    uint16_t a;
-    uint16_t b;
-    uint16_t c;
-    uint16_t next_shift; //0 if this is a branch.
+    uint16_t a; // leaf
+    uint16_t b; // leaf
+    union {
+        uint16_t c; // leaf
+        uint16_t axis; // branch
+    };
+    int16_t next_shift; // zero signifies a leaf
     TriangleNode() {}
 };
-
 
 
 class TriangleMesh;

@@ -28,7 +28,7 @@ struct Comparer {
     int splitting_dimension;
     bool operator()(const PrimitiveInfo &primitive_info) const {
         // printf("splitting along %d %.2f\n", splitting_dimension, compare_to_value);getchar();
-        return primitive_info.centroid[splitting_dimension] <= compare_to_value;
+        return primitive_info.centroid[splitting_dimension] < compare_to_value;
     }
 };
 
@@ -37,10 +37,10 @@ static Node *BVH_create_node(vector<PrimitiveInfo> &p_infos,
                              int num_primitives,
                              int *tree_size)
 {
-    printf("first_primitive: %d\n", first_primitive);
-    printf("num_primitives: %d\n", num_primitives);
-    printf("tree_size: %d\n", *tree_size);
-    printf("num p_infos: %zu\n", p_infos.size());
+    // printf("first_primitive: %d\n", first_primitive);
+    // printf("num_primitives: %d\n", num_primitives);
+    // printf("tree_size: %d\n", *tree_size);
+    // printf("num p_infos: %zu\n", p_infos.size());
 
     (*tree_size)++;
     static int max_num_primitives_in_leaf = 1;
@@ -84,6 +84,7 @@ static Node *BVH_create_node(vector<PrimitiveInfo> &p_infos,
             splitting_dimension = i;
         }
     }
+
     // bvh heuristic: Along the chosen dimension, choose a splitting value as
     // the middle value of the bounding box of the centroids.
     float split_value = 0.5f*min_corner[splitting_dimension] +
@@ -97,7 +98,7 @@ static Node *BVH_create_node(vector<PrimitiveInfo> &p_infos,
     
     Node *child_1 = BVH_create_node(p_infos, first_primitive, mid - first_primitive, tree_size);
     Node *child_2 = BVH_create_node(p_infos, mid, first_primitive+num_primitives - mid, tree_size);
-    return new Node(mid, child_1, child_2);
+    return new Node(mid, child_1, child_2, splitting_dimension);
 }
 static void BVH_delete_node(Node *node)
 {
@@ -151,6 +152,7 @@ static uint32_t BVH_compactify_recur(vector<BVHNode> &compacted, Node *node, uin
         // printf("Branching first\n");
         // printf("start: %d, compacted.size: %zu\n", start, compacted.size());
         compacted[start].box = node->box;
+        compacted[start].axis = node->axis;
         compacted[start].num_primitives = 0; // This is what signifies this is a branching node.
         compacted[start].second_child_offset = BVH_compactify_recur(compacted, node->children[0], start + 1) + 1;
         // printf("Branching second\n");
@@ -317,9 +319,15 @@ bool BVH::intersect(Ray &ray, LocalGeometry *out_geom) const
         if (intersect_box(compacted[index], ray, inv_d, is_negative)) {
             if (compacted[index].num_primitives == 0) {
                 // Branching node.
-                todo_now ++;
-                todo[todo_now] = compacted[index].second_child_offset;
-                index ++;
+                if (is_negative[compacted[index].axis]) {
+                    todo_now ++;
+                    todo[todo_now] = index + 1;
+                    index = compacted[index].second_child_offset;
+                } else {
+                    todo_now ++;
+                    todo[todo_now] = compacted[index].second_child_offset;
+                    index ++;
+                }
             } else {
                 // Leaf node.
                 int n = compacted[index].primitives_offset+compacted[index].num_primitives;
@@ -351,9 +359,15 @@ bool BVH::does_intersect(Ray &ray) const
         if (intersect_box(compacted[index], ray, inv_d, is_negative)) {
             if (compacted[index].num_primitives == 0) {
                 // Branching node.
-                todo_now ++;
-                todo[todo_now] = compacted[index].second_child_offset;
-                index ++;
+                if (is_negative[compacted[index].axis]) {
+                    todo_now ++;
+                    todo[todo_now] = index + 1;
+                    index = compacted[index].second_child_offset;
+                } else {
+                    todo_now ++;
+                    todo[todo_now] = compacted[index].second_child_offset;
+                    index ++;
+                }
             } else {
                 // Leaf node.
                 int n = compacted[index].primitives_offset+compacted[index].num_primitives;

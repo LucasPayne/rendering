@@ -124,6 +124,7 @@ static void flatten_to_triangles_bvh_recur(const BVH &bvh, vector<TriangleNode> 
     } else {
         int this_node_index = *trinodes_index;
         trinodes[this_node_index].box = node->box;
+        trinodes[this_node_index].axis = node->axis;
         (*trinodes_index) ++;
         flatten_to_triangles_bvh_recur(bvh, trinodes, node->children[0], trinodes_index);
         int next_shift = *trinodes_index - this_node_index;
@@ -281,11 +282,16 @@ static inline bool triangles_bvh_intersect(const TriangleMesh *mesh, const vecto
                 
                 index = todo[todo_now--];
             } else {
-                // Branching node.
-                todo_now ++;
-                todo[todo_now] = index + triangles_bvh[index].next_shift;
-                // Due to the unravelled order, the next node is the first primitive of the first child.
-                index ++;
+                if (is_negative[triangles_bvh[index].axis]) {
+                    todo_now ++;
+                    todo[todo_now] = index + 1;
+                    index += triangles_bvh[index].next_shift;
+                } else {
+                    todo_now ++;
+                    todo[todo_now] = index + triangles_bvh[index].next_shift;
+                    // Due to the unravelled order, the next node is the first primitive of the first child.
+                    index ++;
+                }
             }
         } else {
             index = todo[todo_now--];
@@ -325,10 +331,23 @@ static inline bool triangles_bvh_does_intersect(const TriangleMesh *mesh, const 
                 index = todo[todo_now--];
             } else {
                 // Branching node.
+                #if 0
                 todo_now ++;
                 todo[todo_now] = index + triangles_bvh[index].next_shift;
                 // Due to the unravelled order, the next node is the first primitive of the first child.
                 index ++;
+                #else
+                if (is_negative[triangles_bvh[index].axis]) {
+                    todo_now ++;
+                    todo[todo_now] = index + 1;
+                    index += triangles_bvh[index].next_shift;
+                } else {
+                    todo_now ++;
+                    todo[todo_now] = index + triangles_bvh[index].next_shift;
+                    // Due to the unravelled order, the next node is the first primitive of the first child.
+                    index ++;
+                }
+                #endif
             }
         } else {
             index = todo[todo_now--];
