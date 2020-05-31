@@ -11,9 +11,10 @@ Scene *make_scene() {
     primitives.push_back(new GeometricPrimitive(
                          new TriangleMesh(Transform::translate(3,-0.7,5) * Transform::y_rotation(1.5*M_PI/2),
                          bunny),
-                         new FrandTextureRGB(),
                          NULL,
-                         0.4
+                         NULL,
+                         1,
+                         1.2
                          ));
 #if 1
     Model *dragon = load_OFF_model("models/dragon.off", 2, Point(0,0,0), true, PHONG_NORMALS);

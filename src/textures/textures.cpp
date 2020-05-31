@@ -68,3 +68,23 @@ CheckerTexture::CheckerTexture(int _grid_x, int _grid_y, Texture *texture_A, Tex
         mapper = _mapper;
     }
 }
+
+ImageTextureRGB::ImageTextureRGB(const string &filename, bool linear, TextureMapper *_mapper)
+{
+    m_image = new TextureBMP(filename.c_str());
+    m_linear = linear;
+
+    if (_mapper == NULL) {
+        if (g_default_mapper == NULL) default_mapper_initialize();
+        mapper = g_default_mapper;
+    } else {
+        mapper = _mapper;
+    }
+}
+RGB ImageTextureRGB::rgb_lookup(const LocalGeometry &geom)
+{
+    float u,v;
+    get_uv(geom, &u, &v);
+    glm::vec3 rgb_v = m_image->getColorAt(u, v);
+    return RGB(rgb_v.x, rgb_v.y, rgb_v.z);
+}

@@ -19,7 +19,10 @@ clean:
 build/libraries/glad.o: libraries/glad/glad.c
 	$(CC) -c $< -o $@ $(CFLAGS)
 
-build/core.o: build/mathematics.o build/primitives.o build/illumination.o build/imaging.o build/scene.o build/renderer.o build/interaction.o build/shapes.o build/aggregates.o build/multithreading.o build/models.o build/textures.o
+# Code not written by me is in EXTENSION_OBJECTS.
+EXTENSION_OBJECTS=build/TextureBMP.o
+
+build/core.o: build/mathematics.o build/primitives.o build/illumination.o build/imaging.o build/scene.o build/renderer.o build/interaction.o build/shapes.o build/aggregates.o build/multithreading.o build/models.o build/textures.o $(EXTENSION_OBJECTS)
 	ld -relocatable -o $@ $^
 
 build/mathematics.o: build/mathematics/geometry.o build/mathematics/transform.o build/mathematics/numerics.o
@@ -83,6 +86,7 @@ build/models.o: src/models/models.cpp src/models.hpp src/primitives.hpp src/math
 build/textures.o: src/textures/textures.cpp src/textures.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)
 
+
 build/gl_core.o: build/gl.o build/gl/gl_texture.o build/gl/gl_shader_program.o build/gl/gl_input.o
 	ld -relocatable -o $@ $^
 build/gl.o: src/gl/gl.cpp src/gl.hpp
@@ -102,4 +106,9 @@ build/interaction/player.o: src/interaction/player.cpp src/interaction/player.hp
 build/multithreading.o: build/multithreading/multithreading.o
 	ld -relocatable -o $@ $^
 build/multithreading/multithreading.o: src/multithreading/multithreading.cpp src/multithreading.hpp
+	$(CC) -c $< -o $@ $(CFLAGS)
+
+
+# Extensions (outside code).
+build/TextureBMP.o: ext/TextureBMP.cpp ext/TextureBMP.hpp
 	$(CC) -c $< -o $@ $(CFLAGS)

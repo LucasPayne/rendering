@@ -3,6 +3,8 @@
 #include "core.hpp"
 #include "shapes.hpp"
 
+#include "ext/TextureBMP.h"
+
 class TextureMapper {
 public:
     virtual void get_uv(const LocalGeometry &geom, float *u, float *v) = 0;
@@ -53,22 +55,33 @@ public:
 class ConstantTextureRGB : public Texture {
 public:
     RGB rgb_lookup(const LocalGeometry &geom);
-    RGB m_rgb;
     ConstantTextureRGB(RGB rgb) :
         m_rgb{rgb}
     {}
     ConstantTextureRGB(float r, float g, float b) {
         m_rgb = RGB(r,g,b);
     }
+private:
+    RGB m_rgb;
 };
 
 class ConstantTextureFloat : public Texture {
 public:
     float float_lookup(const LocalGeometry &geom);
-    float m_value;
     ConstantTextureFloat(float value) :
         m_value{value}
     {}
+private:
+    float m_value;
+};
+
+class ImageTextureRGB : public Texture {
+public:
+    ImageTextureRGB(const string &filename, bool linear = false, TextureMapper *_mapper = NULL);
+    RGB rgb_lookup(const LocalGeometry &geom);
+private:
+    bool m_linear; // false: nearest
+    TextureBMP *m_image;
 };
 
 #endif // TEXTURES_H

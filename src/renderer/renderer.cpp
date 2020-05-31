@@ -1,6 +1,10 @@
 #include "renderer.hpp"
 #include "multithreading.hpp"
 
+using glm::normalize;
+using glm::cross;
+using glm::dot;
+
 // This does not include the primary camera ray.
 #define MAX_RECURSION 3
 
@@ -44,21 +48,26 @@ static RGB ray_trace(Ray &ray, Scene *scene, Primitive *root_primitive, int recu
         float eta = hit_primitive->refractive_index;
         if (recursion_level < MAX_RECURSION && eta > 0) {
             float inv_eta = 1.0 / eta;
-            Vector e = glm::normalize(glm::cross(glm::cross(ray.d,geom.n),geom.n));
-            float sinthetap = inv_eta * glm::dot(ray.d,e);
-            Vector refracted_direction = sinthetap*e - geom.n;
+
+            Vector e = -glm::normalize(glm::cross(glm::cross(geom.n,ray.d), geom.n));
+            float sinthetap = inv_eta * glm::dot(glm::normalize(ray.d), e);
+            float costhetap = sqrt(1 - sinthetap*sinthetap);
+            Vector refracted_direction = sinthetap*e - costhetap*geom.n;
             const float epsilon = 1e-3;
             Ray refracted_ray(geom.p+epsilon*refracted_direction, refracted_direction);
             Intersection exit_inter;
 	    // It is assumed refractive surfaces are closed. Ignore refraction in the case that the ray doesn't exit.
             if (hit_primitive->intersect(refracted_ray, &exit_inter)) {
+                LocalGeometry &e_geom = exit_inter.geom;
+                e = normalize(cross(e_geom.n, cross(refracted_ray.d, e_geom.n)));
+                sinthetap = eta * dot(normalize(refracted_ray.d), e);
+                costhetap = sqrt(1 - sinthetap*sinthetap);
 
-                e = glm::normalize(glm::cross(glm::cross(refracted_ray.d,-exit_inter.geom.n),-exit_inter.geom.n));
-                sinthetap = eta * glm::dot(refracted_ray.d,e);
-                Vector exit_direction = sinthetap*e + exit_inter.geom.n;
-                const float epsilon = 1e-3;
-                Ray exit_ray = Ray(exit_inter.geom.p+epsilon*exit_direction, exit_direction);
+                Vector exit_direction = sinthetap*e + costhetap*e_geom.n;
+                Ray exit_ray = Ray(e_geom.p+epsilon*exit_direction, exit_direction);
                 color += ray_trace(exit_ray, scene, root_primitive, recursion_level + 1);
+                // Ray exit_ray(exit_inter.geom.p+refracted_ray.d*epsilon, refracted_ray.d);
+                // color += ray_trace(exit_ray, scene, root_primitive, recursion_level + 1);
             }
         }
         #endif

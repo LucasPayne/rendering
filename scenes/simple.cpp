@@ -5,6 +5,7 @@ Scene *make_scene() {
     vector<Primitive *> primitives(0);
 
 #if 1
+{
     Model *bunny = load_OFF_model("models/bunny.off", 1.5, Point(0,1,0), true, true);
     primitives.push_back(new GeometricPrimitive(
                          new TriangleMesh(Transform::translate(3.5,0,4) * Transform::y_rotation(1.5*M_PI/2),
@@ -16,6 +17,34 @@ Scene *make_scene() {
                          NULL,
                          0
                          ));
+}
+{
+#if 0
+    Model *bunny = load_OFF_model("models/bunny.off", 1.7, Point(0,1,0), true, true);
+    primitives.push_back(new GeometricPrimitive(
+                         new TriangleMesh(Transform::translate(-5,0.3,4) * Transform::y_rotation(2.6),
+                         bunny),
+                         NULL,
+                         NULL,
+                         0,
+                         1.2
+                         ));
+#endif
+    Model *icosahedron = load_OFF_model("models/icosahedron.off", 0.8, Point(0,0,0), false, false);
+    Point positions[3] = {
+        {-3.7,4,5},
+        {0,4.2,4.8},
+        {3.7,4,5},
+    };
+    for (int i = 0; i < 3; i++) {
+    primitives.push_back(new GeometricPrimitive(
+                         new TriangleMesh(Transform::translate(positions[i]) * Transform::y_rotation(1),
+                         icosahedron),
+                         new ConstantTextureRGB(RGB(0.76,0.76,1)),
+                         NULL, 0, 1.5
+                         ));
+    }
+}
 #endif
 
 #if 0
@@ -46,7 +75,6 @@ Scene *make_scene() {
                          new Sphere(Transform::translate(sphere_pos), 2),
                          NULL,
                          NULL,
-                         0,
                          1
                          ));
 #endif
@@ -59,7 +87,8 @@ Scene *make_scene() {
                              new Sphere(Transform::translate(sphere_pos + Vector(cos(theta)*r,-0.5,sin(theta)*r)), 0.4),
                              sphere_tex,
                              NULL,
-                             0
+                             0,
+                             1.3
                              ));
     }
 

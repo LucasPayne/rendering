@@ -23,7 +23,7 @@ bool Sphere::intersect(Ray &in_ray, LocalGeometry *geom) const
     geom->shape = this;
     in_ray.max_t = t;
     geom->p = in_ray(t);
-    geom->n = geom->p - m_position;
+    geom->n = glm::normalize(geom->p - m_position);
     return true;
 }
 
