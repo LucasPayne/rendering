@@ -3,15 +3,35 @@
 #include "core.hpp"
 #include "shapes.hpp"
 
-class TextureMapping {
+class TextureMapper {
 public:
-    
+    virtual void get_uv(const LocalGeometry &geom, float *u, float *v) = 0;
+};
+
+class CylinderMapper : public TextureMapper {
+public:
+    CylinderMapper() {}
+    void get_uv(const LocalGeometry &geom, float *u, float *v);
+};
+
+
+class GeometryMapper : public TextureMapper {
+public:
+    GeometryMapper() {}
+    void get_uv(const LocalGeometry &geom, float *u, float *v) {
+        *u = geom.u;
+        *v = geom.v;
+    }
 };
 
 class Texture {
 public:
     virtual RGB rgb_lookup(const LocalGeometry &geom);
     virtual float float_lookup(const LocalGeometry &geom);
+    TextureMapper *mapper;
+    void get_uv(const LocalGeometry &geom, float *u, float *v) {
+        mapper->get_uv(geom, u, v);
+    }
 };
 
 class CheckerTexture : public Texture {
@@ -21,12 +41,7 @@ public:
     Texture *textures[2];
     int grid_x;
     int grid_y;
-    CheckerTexture(int _grid_x, int _grid_y, Texture *texture_A, Texture *texture_B) {
-        grid_x = _grid_x;
-        grid_y = _grid_y;
-        textures[0] = texture_A;
-        textures[1] = texture_B;
-    }
+    CheckerTexture(int _grid_x, int _grid_y, Texture *texture_A, Texture *texture_B, TextureMapper *_mapper = NULL);
 };
 
 class FrandTextureRGB : public Texture {
@@ -42,6 +57,9 @@ public:
     ConstantTextureRGB(RGB rgb) :
         m_rgb{rgb}
     {}
+    ConstantTextureRGB(float r, float g, float b) {
+        m_rgb = RGB(r,g,b);
+    }
 };
 
 class ConstantTextureFloat : public Texture {
