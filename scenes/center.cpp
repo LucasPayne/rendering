@@ -5,7 +5,7 @@ Scene *make_scene() {
 
     vector<Primitive *> primitives(0);
 
-
+    Texture *color_tex = new ConstantTextureRGB(RGB(1,0.6,0.4));
     int n = 10;
     for (int I = -n; I <= n; I++) {
         for (int J = -n; J <= n; J++) {
@@ -17,7 +17,9 @@ Scene *make_scene() {
 
                     //GeometricPrimitive *sphere = new GeometricPrimitive(new Sphere(Transform::translate(I*15 + cos(theta)*r,K,J*15 + sin(theta)*r), 0.5));
                     //sphere_list->add(sphere);
-                    primitives.push_back(new GeometricPrimitive(new Sphere(Transform::translate(I*15 + cos(theta)*r,K,J*15 + sin(theta)*r), 0.5)));
+                    float f = frand();
+                    primitives.push_back(new GeometricPrimitive(new Sphere(Transform::translate(I*15 + cos(theta)*r,K,J*15 + sin(theta)*r), 0.5),
+                                         f<0.5?color_tex:NULL, NULL, f<0.5?0:0.9, 0));
                 }
                 //scene->add_primitive(sphere_list);
             }
@@ -36,7 +38,8 @@ Scene *make_scene() {
 
     // scene->add_primitive(new GeometricPrimitive(new Sphere(Transform::translate(0,20,0), 4)));
 
-    scene->add_light(new PointLight(Point(0,60,0), 3500.f*RGB(0.6,0.6,0.9)));
+    scene->add_light(new PointLight(Point(0,60,0), 7000.f*RGB(1,1,1)));
+    scene->add_light(new PointLight(Point(0,2,0), 50.f*RGB(1,1,1)));
 
     // scene->add_light(new PointLight(Point(0,4,0), 20.f*RGB(0.6,0.6,0.9)));
     // scene->add_light(new PointLight(Point(-3,1,0), 20.f*RGB(1,0.6,0.5)));

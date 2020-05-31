@@ -23,3 +23,12 @@ RGB FrandTextureRGB::rgb_lookup(const LocalGeometry &geom)
 {
     return RGB(frand(), frand(), frand());
 }
+
+
+RGB CheckerTexture::rgb_lookup(const LocalGeometry &geom)
+{
+    const float &u = geom.u;
+    const float &v = geom.v;
+    printf("%.2f %.2f\n", u, v);
+    return textures[((int)(u*grid_x) + (int)(v*grid_y)) % 2]->rgb_lookup(geom);
+}

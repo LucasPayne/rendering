@@ -1,7 +1,8 @@
 #include "renderer.hpp"
 #include "multithreading.hpp"
 
-#define MAX_RECURSION 4
+// This does not include the primary camera ray.
+#define MAX_RECURSION 3
 
 // Trace a ray through the primitive (probably the scene itself,
 // but since the scene is a primitive, why not allow this to be any primitive).
@@ -27,16 +28,17 @@ static RGB ray_trace(Ray &ray, Scene *scene, Primitive *root_primitive, int recu
                 color += light_radiance * (cos_theta < 0 ? 0 : cos_theta);
             }
         }
-        // Modulate with the incoming radiance.
         float r = hit_primitive->reflectiveness;
+        RGB diffuse_color = (1 - r) * hit_primitive->diffuse_texture->rgb_lookup(geom);
+        color *= diffuse_color;
+        // Modulate with the incoming radiance.
         RGB incoming_radiance = (1 - r) * hit_primitive->diffuse_texture->rgb_lookup(geom);
         if (recursion_level < MAX_RECURSION && r > 0) {
             Vector reflected_dir = ray.d - 2*glm::dot(ray.d, geom.n)*geom.n;
             const float epsilon = 1e-3;
             Ray reflected_ray(geom.p+epsilon*reflected_dir, reflected_dir);
-            incoming_radiance += r * ray_trace(reflected_ray, scene, root_primitive, recursion_level + 1);
+            color += r * ray_trace(reflected_ray, scene, root_primitive, recursion_level + 1);
         }
-        color *= incoming_radiance;
         return color;
     } else {
         const RGB background_color(0.97, 0.7, 0.96);

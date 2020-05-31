@@ -23,6 +23,8 @@ Plane::Plane(Point position, Vector x_extent, Vector y_extent, float width, floa
     set_transform(Transform(matrix));
     m_width = width;
     m_height = height;
+    m_inv_width = 1.0 / width;
+    m_inv_height = 1.0 / height;
 }
 
 bool Plane::intersect(Ray &in_ray, LocalGeometry *geom) const
@@ -44,6 +46,8 @@ bool Plane::intersect(Ray &in_ray, LocalGeometry *geom) const
     geom->p = in_ray.o + in_ray.d * t;
     geom->n = m_normal;
     geom->shape = this;
+    geom->u = (x+0.5*m_width)*m_inv_width;
+    geom->v = (y+0.5*m_height)*m_inv_height;
     return true;
 }
 bool Plane::does_intersect(Ray &in_ray) const

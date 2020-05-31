@@ -93,6 +93,7 @@ struct LocalGeometry {
     const Shape *shape;
     Point p;  // Point on the shape.
     Vector n; // Normal outward from the surface element.
+    float u,v;
 };
 
 // #include "shapes/quadric.hpp"

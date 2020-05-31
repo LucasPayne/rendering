@@ -19,6 +19,9 @@ public:
 private:
     float m_height;
     float m_width;
+    // Store these so they don't have to be computed for getting texture coordinates.
+    float m_inv_height;
+    float m_inv_width;
     Point m_position;
 
     //-----Remember to update these if the transform is changed!
