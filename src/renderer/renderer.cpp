@@ -31,14 +31,37 @@ static RGB ray_trace(Ray &ray, Scene *scene, Primitive *root_primitive, int recu
         float r = hit_primitive->reflectiveness;
         RGB diffuse_color = (1 - r) * hit_primitive->diffuse_texture->rgb_lookup(geom);
         color *= diffuse_color;
-        // Modulate with the incoming radiance.
-        RGB incoming_radiance = (1 - r) * hit_primitive->diffuse_texture->rgb_lookup(geom);
+
+        // Reflection
         if (recursion_level < MAX_RECURSION && r > 0) {
             Vector reflected_dir = ray.d - 2*glm::dot(ray.d, geom.n)*geom.n;
             const float epsilon = 1e-3;
             Ray reflected_ray(geom.p+epsilon*reflected_dir, reflected_dir);
             color += r * ray_trace(reflected_ray, scene, root_primitive, recursion_level + 1);
         }
+        // Refraction
+        #if 1
+        float eta = hit_primitive->refractive_index;
+        if (recursion_level < MAX_RECURSION && eta > 0) {
+            float inv_eta = 1.0 / eta;
+            Vector e = glm::normalize(glm::cross(glm::cross(ray.d,geom.n),geom.n));
+            float sinthetap = inv_eta * glm::dot(ray.d,e);
+            Vector refracted_direction = sinthetap*e - geom.n;
+            const float epsilon = 1e-3;
+            Ray refracted_ray(geom.p+epsilon*refracted_direction, refracted_direction);
+            Intersection exit_inter;
+	    // It is assumed refractive surfaces are closed. Ignore refraction in the case that the ray doesn't exit.
+            if (hit_primitive->intersect(refracted_ray, &exit_inter)) {
+
+                e = glm::normalize(glm::cross(glm::cross(refracted_ray.d,-exit_inter.geom.n),-exit_inter.geom.n));
+                sinthetap = eta * glm::dot(refracted_ray.d,e);
+                Vector exit_direction = sinthetap*e + exit_inter.geom.n;
+                const float epsilon = 1e-3;
+                Ray exit_ray = Ray(exit_inter.geom.p+epsilon*exit_direction, exit_direction);
+                color += ray_trace(exit_ray, scene, root_primitive, recursion_level + 1);
+            }
+        }
+        #endif
         return color;
     } else {
         const RGB background_color(0.97, 0.7, 0.96);

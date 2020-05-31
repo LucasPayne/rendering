@@ -9,7 +9,10 @@ Scene *make_scene() {
     primitives.push_back(new GeometricPrimitive(
                          new TriangleMesh(Transform::translate(3.5,0,4) * Transform::y_rotation(1.5*M_PI/2),
                          bunny),
-                         new CheckerTexture(5,5,new ConstantTextureRGB(0,0,0),new ConstantTextureRGB(1,1,1), new CylinderMapper()),
+                         new CheckerTexture(40,5,
+                             new ConstantTextureRGB(1,1,1),
+                             new ConstantTextureRGB(0,0,1),
+                             new CylinderMapper()),
                          NULL,
                          0
                          ));
@@ -31,12 +34,22 @@ Scene *make_scene() {
 
 
     Point sphere_pos(0,1.8,0);
+#if 0
     primitives.push_back(new GeometricPrimitive(
                          new Sphere(Transform::translate(sphere_pos), 2),
                          NULL,
                          NULL,
                          1
                          ));
+#else
+    primitives.push_back(new GeometricPrimitive(
+                         new Sphere(Transform::translate(sphere_pos), 2),
+                         NULL,
+                         NULL,
+                         0,
+                         1
+                         ));
+#endif
     int num_spheres = 12;
     Texture *sphere_tex = new ConstantTextureRGB(RGB(1,0.6,0.4));
     for (int i = 0; i < num_spheres; i++) {
@@ -51,7 +64,7 @@ Scene *make_scene() {
     }
 
 
-    scene->add_light(new PointLight(Point(0,6,0), 25.f*RGB(1,1,1)));
+    scene->add_light(new PointLight(Point(-3,10,0), 25.f*RGB(1,1,1)));
     scene->add_light(new PointLight(Point(4,8,4), 10.f*RGB(1,0,0)));
 
     float size = 15;

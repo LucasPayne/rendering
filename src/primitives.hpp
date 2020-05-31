@@ -59,7 +59,7 @@ public:
     	               Texture *_diffuse_texture = NULL,
     	               Texture *_specular_texture = NULL,
                        float _reflectiveness = 0.f,
-                       float _refractive_index = 1.f);
+                       float _refractive_index = 0.f);
 
     // Pass on some routines to the underlying shape.
     virtual bool can_intersect() const { 
@@ -84,7 +84,7 @@ public:
     Texture *diffuse_texture;
     Texture *specular_texture;
     float reflectiveness;
-    float refractive_index;
+    float refractive_index; //0: no refraction
 private:
 };
 

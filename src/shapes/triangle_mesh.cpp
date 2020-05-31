@@ -376,6 +376,13 @@ BoundingBox TriangleMesh::object_bound() const
 
 TriangleMesh::TriangleMesh(const Transform &o2w, Model *_model)
 {
+    // Even though the triangles are baked into world space, keep the
+    // transforms, since they are used elsewhere.
+    // object_to_world = o2w;
+    //---------...... o2w seems to be used elsewhere and clashes with the triangles being in worldspace.
+    //---------w2o is still useful and seems to work.
+    world_to_object = o2w.inverse();
+
     // Copy and transform the model into world space.
     // This can save a lot of ray transformations.
     std::cout << "Creating triangle mesh\n";

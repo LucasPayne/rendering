@@ -17,7 +17,8 @@ void CylinderMapper::get_uv(const LocalGeometry &geom, float *u, float *v)
     // Height along the cylinder.
     *v = op.y;
 
-    float theta = atan2(op.z, op.x);
+    float theta = atan2f(op.z, op.x);
+    // printf("%.2f\n", theta);
     *u = 0.5 + theta * (0.5 / M_PI);
 }
 
