@@ -110,5 +110,5 @@ build/multithreading/multithreading.o: src/multithreading/multithreading.cpp src
 
 
 # Extensions (outside code).
-build/TextureBMP.o: ext/TextureBMP.cpp ext/TextureBMP.hpp
+build/TextureBMP.o: src/ext/TextureBMP.cpp src/ext/TextureBMP.h
 	$(CC) -c $< -o $@ $(CFLAGS)

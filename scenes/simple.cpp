@@ -40,7 +40,8 @@ Scene *make_scene() {
     primitives.push_back(new GeometricPrimitive(
                          new TriangleMesh(Transform::translate(positions[i]) * Transform::y_rotation(1),
                          icosahedron),
-                         new ConstantTextureRGB(RGB(0.76,0.76,1)),
+                         //new ConstantTextureRGB(RGB(0.76,0.76,1)),
+                         new ImageTextureRGB("images/rock.bmp", false, new CylinderMapper()),
                          NULL, 0, 1.5
                          ));
     }

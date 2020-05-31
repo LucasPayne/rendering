@@ -77,7 +77,7 @@ private:
 
 class ImageTextureRGB : public Texture {
 public:
-    ImageTextureRGB(const string &filename, bool linear = false, TextureMapper *_mapper = NULL);
+    ImageTextureRGB(string const &filename, bool linear = false, TextureMapper *_mapper = NULL);
     RGB rgb_lookup(const LocalGeometry &geom);
 private:
     bool m_linear; // false: nearest

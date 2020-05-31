@@ -2,7 +2,7 @@
 
 // Read OFF models with triangle faces. Comments are allowed.
 // -
-// Ported from C code.
+// Ported from my own C code.
 Model *load_OFF_model(std::string const &filename, float scale, Point center, bool invert_winding_order, bool create_phong_normals)
 {   
     std::cout << "Loading model \"" << filename << "\" with parameters:\n";

@@ -69,7 +69,7 @@ CheckerTexture::CheckerTexture(int _grid_x, int _grid_y, Texture *texture_A, Tex
     }
 }
 
-ImageTextureRGB::ImageTextureRGB(const string &filename, bool linear, TextureMapper *_mapper)
+ImageTextureRGB::ImageTextureRGB(string const &filename, bool linear, TextureMapper *_mapper)
 {
     m_image = new TextureBMP(filename.c_str());
     m_linear = linear;
